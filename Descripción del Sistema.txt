@@ -1,0 +1,1123 @@
+Descripción del Sistema
+
+El proyecto consiste en el desarrollo de una aplicación web tipo red social orientada a mascotas, cuyo objetivo principal es permitir a los dueños registrar a sus mascotas y encontrar posibles compañeros de juego o convivencia mediante un sistema de emparejamiento similar a aplicaciones de citas.
+
+La plataforma permite el registro de usuarios (dueños de mascotas), quienes podrán crear y administrar el perfil de sus mascotas dentro del sistema. Cada usuario tendrá la posibilidad de registrar hasta un máximo de cinco mascotas, las cuales estarán asociadas exclusivamente a la cuenta del dueño que las registró.
+
+Para cada mascota se almacenará información relevante, como:
+
+Nombre
+
+Raza
+
+Edad
+
+Características de comportamiento (por ejemplo: juguetón, sociable, tranquilo, comelón, entre otros)
+
+Estas características serán utilizadas como parte fundamental del algoritmo de emparejamiento, el cual permitirá encontrar coincidencias entre mascotas con comportamientos o rasgos similares.
+
+Sistema de emparejamiento
+
+El sistema implementará un algoritmo de matching basado en dos factores principales:
+
+Características de la mascota
+
+Ubicación geográfica
+
+Ambos factores tendrán el mismo peso dentro del algoritmo.
+
+El sistema buscará coincidencias priorizando:
+
+Mascotas con características compatibles
+
+Mascotas que se encuentren geográficamente cercanas
+
+El rango de distancia para generar coincidencias será:
+
+Distancia mínima aproximada: 1 km
+
+Distancia ideal de búsqueda: hasta 10 km
+
+Distancia máxima permitida: 15 km
+
+De esta manera, el sistema priorizará mascotas cercanas que además compartan rasgos similares, aumentando la probabilidad de interacción entre ellas.
+
+Preferencias del usuario
+
+Además de las características propias de las mascotas, el sistema también permitirá que el dueño establezca preferencias de interacción, por ejemplo:
+
+Compañero de juego
+
+Compañero de paseo
+
+Compañero para socializar
+
+Mascota tranquila para compañía
+
+Estas preferencias ayudarán a mejorar la calidad de las coincidencias generadas por el sistema.
+
+Perfiles de mascotas
+
+Cada mascota tendrá un perfil público dentro de la plataforma, el cual incluirá:
+
+Fotografía de perfil
+
+Información básica de la mascota
+
+Características de comportamiento
+
+Las mascotas serán mostradas dentro del sistema mediante tarjetas (cards) que presentarán la información y la fotografía correspondiente.
+
+Cuando dos mascotas generan una coincidencia dentro del sistema, se habilitará la posibilidad de comunicación entre los dueños.
+
+Sistema de mensajería
+
+La plataforma contará con un sistema de mensajería instantánea en tiempo real, que permitirá la comunicación directa entre los dueños de las mascotas que hayan hecho match.
+
+Este sistema permitirá intercambiar mensajes de manera rápida para coordinar encuentros o interacción entre las mascotas.
+
+Panel administrativo
+
+El sistema contará con un panel administrativo, el cual permitirá gestionar los distintos elementos de la plataforma. El administrador tendrá acceso a:
+
+Gestión completa de usuarios (CRUD)
+
+Gestión de mascotas registradas
+
+Control y supervisión de perfiles
+
+Administración de fotografías de perfil de mascotas
+
+Esto permitirá mantener el control y moderación del sistema.
+
+Arquitectura del sistema
+
+La aplicación se desarrollará utilizando una arquitectura separada entre frontend y backend.
+
+Backend
+
+El backend será desarrollado utilizando Django con Python, el cual se encargará de:
+
+Procesar la lógica del sistema
+
+Gestionar la base de datos
+
+Ejecutar el algoritmo de emparejamiento
+
+Administrar autenticación y seguridad
+
+Manejar el sistema de mensajería
+
+Exponer endpoints mediante API REST
+
+La comunicación se realizará mediante métodos HTTP como:
+
+GET
+
+POST
+
+PUT
+
+DELETE
+
+------------------------------------------------------------------------------------------------
+
+### Instrucciones para Front con React
+
+
+
+#### Creación del proyecto Front
+
+
+
+Asegúrate de tener instalado Node.js en tu computadora. Puedes comprobarlo abriendo tu terminal y escribiendo node -v. Si no lo tienes, descárgalo desde su página oficial.
+
+
+
+Pasos para generar el proyecto con Vite
+
+1\. Ejecuta el comando de creación
+
+Abre tu terminal (o línea de comandos) y navega a la carpeta donde quieras guardar tu proyecto. Luego, ejecuta el siguiente comando:
+
+
+
+npm create vite@latest mi-proyecto-react -- --template react
+
+
+
+
+
+(Nota: Puedes cambiar mi-proyecto-react por el nombre que prefieras para tu aplicación).
+
+
+
+2\. Entra a la carpeta del proyecto
+
+Una vez que termine el proceso anterior, navega dentro del nuevo directorio que se acaba de crear:
+
+
+
+cd mi-proyecto-react
+
+
+
+
+
+3\. Instala las dependencias
+
+Ahora necesitas descargar todos los paquetes necesarios para que React funcione. Ejecuta:
+
+
+
+npm install
+
+
+
+
+
+4\. Inicia el servidor de desarrollo
+
+Finalmente, levanta el proyecto para verlo en tu navegador:
+
+
+
+npm run dev
+
+
+
+
+
+#### Configuración del proyecto Front
+
+
+
+1\. Instalar Axios
+
+Si aún no lo tienes en tu proyecto de React, abre tu terminal y ejecuta:
+
+
+
+npm install axios
+
+
+
+
+
+1.1 Instalar dependencias útiles
+
+
+
+npm install bootstrap react-data-table-component react-hot-toast
+
+
+
+
+
+2\. Crear un archivo de servicios API
+
+Es una excelente práctica separar las llamadas al backend en un archivo propio. Crea un archivo llamado api.js (por ejemplo en src/services/api.js):
+
+
+
+//En este caso es para Mascotas
+
+
+
+import axios from 'axios';
+
+const BASE\_URL = 'http://localhost:8000/api/mascotas'; 
+
+
+
+// 1. LISTAR (GET)
+
+export const read = () => {
+
+&nbsp;   return axios.get(`${BASE\_URL}/`);
+
+};
+
+
+
+// 2. CREAR (POST)
+
+export const create = (data) => {
+
+&nbsp;   const formData = new FormData();
+
+&nbsp;   for (const key in data) {
+
+&nbsp;       formData.append(key, data\[key]);
+
+&nbsp;   }
+
+&nbsp;   return axios.post(`${BASE\_URL}/`, formData);
+
+};
+
+
+
+// 3. ACTUALIZAR (PUT)
+
+export const update = (id, data) => {
+
+&nbsp;   const formData = new FormData();
+
+&nbsp;   for (const key in data) {
+
+&nbsp;       formData.append(key, data\[key]);
+
+&nbsp;   }
+
+&nbsp;   return axios.put(`${BASE\_URL}/${id}/`, formData);
+
+};
+
+
+
+// 4. ELIMINAR (DELETE)
+
+export const deleteM = (id) => {
+
+&nbsp;   return axios.delete(`${BASE\_URL}/${id}/`);
+
+};
+
+
+
+
+
+3\. Crear el Componente Principal en React
+
+Ahora, vamos a crear un componente llamado MascotasApp.jsx. Este componente tendrá la tabla para Listar y Eliminar, además de un formulario para Crear y Actualizar.
+
+
+
+
+
+import { useState, useEffect } from 'react';
+
+import { read, create, update, deleteM } from './services/api';
+
+import DataTable from 'react-data-table-component';
+
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+import toast, { Toaster } from 'react-hot-toast';
+
+
+
+export default function MascotasApp() {
+
+&nbsp;   const \[mascotas, setMascotas] = useState(\[]);
+
+&nbsp;   const \[formData, setFormData] = useState({ nombre: '', especie: '', edad: '' });
+
+&nbsp;   const \[editandoId, setEditandoId] = useState(null);
+
+&nbsp;   const \[filtro, setFiltro] = useState('');
+
+&nbsp;   const \[cargandoTabla, setCargandoTabla] = useState(false);
+
+&nbsp;   const \[cargandoGuardar, setCargandoGuardar] = useState(false);
+
+&nbsp;   const \[erroresBackend, setErroresBackend] = useState({});
+
+
+
+&nbsp;   useEffect(() => {
+
+&nbsp;       cargarMascotas();
+
+&nbsp;   }, \[]);
+
+
+
+&nbsp;   const cargarMascotas = async () => {
+
+&nbsp;       setCargandoTabla(true);
+
+&nbsp;       try {
+
+&nbsp;           const respuesta = await read();
+
+&nbsp;           setMascotas(respuesta.data);
+
+&nbsp;       } catch (error) {
+
+&nbsp;           console.error("Error al cargar mascotas:", error);
+
+&nbsp;           toast.error("Error al obtener los datos del servidor");
+
+&nbsp;       } finally {
+
+&nbsp;           setCargandoTabla(false);
+
+&nbsp;       }
+
+&nbsp;   };
+
+
+
+&nbsp;   const handleChange = (e) => {
+
+&nbsp;       setFormData({
+
+&nbsp;           ...formData,
+
+&nbsp;           \[e.target.name]: e.target.value
+
+&nbsp;       });
+
+&nbsp;   };
+
+
+
+&nbsp;   const handleSubmit = async (e) => {
+
+&nbsp;       e.preventDefault();
+
+&nbsp;       setCargandoGuardar(true);
+
+&nbsp;	setErroresBackend({});
+
+
+
+&nbsp;       await new Promise(resolve => setTimeout(resolve, 500)); 
+
+
+
+&nbsp;       try {
+
+&nbsp;           if (editandoId) {
+
+&nbsp;               await update(editandoId, formData);
+
+&nbsp;               toast.success("Mascota actualizada correctamente");
+
+&nbsp;           } else {
+
+&nbsp;               await create(formData);
+
+&nbsp;               toast.success("Mascota registrada exitosamente");
+
+&nbsp;           }
+
+
+
+&nbsp;           setFormData({ nombre: '', especie: '', edad: '' });
+
+&nbsp;           setEditandoId(null);
+
+&nbsp;           cargarMascotas();
+
+
+
+&nbsp;       } catch (error) {
+
+&nbsp;           console.error("Error al guardar:", error);
+
+&nbsp;       
+
+
+
+&nbsp;       if (error.response \&\& error.response.data) {
+
+&nbsp;           setErroresBackend(error.response.data); // Guardamos los errores por campo
+
+&nbsp;           toast.error("Por favor, corrige los errores en el formulario");
+
+&nbsp;       } else {
+
+&nbsp;           toast.error("Hubo un error de conexión con el servidor");
+
+&nbsp;       }        
+
+} finally {
+
+&nbsp;           setCargandoGuardar(false);
+
+&nbsp;       }
+
+&nbsp;   };
+
+
+
+&nbsp;   const prepararEdicion = (mascota) => {
+
+&nbsp;       setFormData({
+
+&nbsp;           nombre: mascota.nombre,
+
+&nbsp;           especie: mascota.especie,
+
+&nbsp;           edad: mascota.edad
+
+&nbsp;       });
+
+&nbsp;       setEditandoId(mascota.id);
+
+&nbsp;       window.scrollTo({ top: 0, behavior: 'smooth' });
+
+&nbsp;   };
+
+
+
+&nbsp;   const handleEliminar = async (id) => {
+
+&nbsp;       if (window.confirm("¿Seguro que deseas eliminar esta mascota?")) {
+
+&nbsp;           const toastId = toast.loading("Eliminando mascota..."); 
+
+&nbsp;           try {
+
+&nbsp;               await deleteM(id);
+
+&nbsp;               toast.success("Mascota eliminada", { id: toastId });
+
+&nbsp;               cargarMascotas(); 
+
+&nbsp;           } catch (error) {
+
+&nbsp;               console.error("Error al eliminar:", error);
+
+&nbsp;               toast.error("Error al eliminar la mascota", { id: toastId });
+
+&nbsp;           }
+
+&nbsp;       }
+
+&nbsp;   };
+
+
+
+&nbsp;   const mascotasFiltradas = mascotas.filter(
+
+&nbsp;       mascota => 
+
+&nbsp;           mascota.nombre.toLowerCase().includes(filtro.toLowerCase()) || 
+
+&nbsp;           mascota.especie.toLowerCase().includes(filtro.toLowerCase())
+
+&nbsp;   );
+
+
+
+&nbsp;   const barraDeBusqueda = (
+
+&nbsp;       <div className="input-group mb-3" style={{ maxWidth: '300px' }}>
+
+&nbsp;           <input
+
+&nbsp;               type="text"
+
+&nbsp;               className="form-control"
+
+&nbsp;               placeholder="Buscar nombre o especie..."
+
+&nbsp;               value={filtro}
+
+&nbsp;               onChange={(e) => setFiltro(e.target.value)}
+
+&nbsp;           />
+
+&nbsp;           {filtro \&\& (
+
+&nbsp;               <button className="btn btn-outline-secondary" type="button" onClick={() => setFiltro('')}>
+
+&nbsp;                   ✖
+
+&nbsp;               </button>
+
+&nbsp;           )}
+
+&nbsp;       </div>
+
+&nbsp;   );
+
+
+
+&nbsp;   const SpinnerTabla = () => (
+
+&nbsp;       <div className="p-5 text-center">
+
+&nbsp;           <div className="spinner-border text-primary" role="status">
+
+&nbsp;               <span className="visually-hidden">Cargando...</span>
+
+&nbsp;           </div>
+
+&nbsp;           <p className="mt-2 text-muted">Cargando registros...</p>
+
+&nbsp;       </div>
+
+&nbsp;   );
+
+
+
+&nbsp;   const columnas = \[
+
+&nbsp;       { name: 'Nombre', selector: row => row.nombre, sortable: true },
+
+&nbsp;       { name: 'Especie', selector: row => row.especie, sortable: true },
+
+&nbsp;       { name: 'Edad', selector: row => row.edad, sortable: true },
+
+&nbsp;       {
+
+&nbsp;           name: 'Acciones',
+
+&nbsp;           cell: row => (
+
+&nbsp;               <div className="d-flex gap-2">
+
+&nbsp;                   <button className="btn btn-warning btn-sm" onClick={() => prepararEdicion(row)} disabled={cargandoTabla}>
+
+&nbsp;                       ✏️ Editar
+
+&nbsp;                   </button>
+
+&nbsp;                   <button className="btn btn-danger btn-sm" onClick={() => handleEliminar(row.id)} disabled={cargandoTabla}>
+
+&nbsp;                       🗑️ Eliminar
+
+&nbsp;                   </button>
+
+&nbsp;               </div>
+
+&nbsp;           ),
+
+&nbsp;           ignoreRowClick: true,
+
+&nbsp;           allowOverflow: true,
+
+&nbsp;           button: true,
+
+&nbsp;       },
+
+&nbsp;   ];
+
+
+
+&nbsp;   return (
+
+&nbsp;       <div className="container mt-5">
+
+&nbsp;           <Toaster position="top-right" reverseOrder={false} /> 
+
+
+
+&nbsp;           <div className="row">
+
+&nbsp;               <div className="col-md-4 mb-4">
+
+&nbsp;                   <div className="card shadow-sm">
+
+&nbsp;                       <div className="card-header bg-primary text-white">
+
+&nbsp;                           <h5 className="mb-0">{editandoId ? 'Editar Mascota' : 'Registrar Mascota'}</h5>
+
+&nbsp;                       </div>
+
+&nbsp;                       <div className="card-body">
+
+&nbsp;                           <form onSubmit={handleSubmit}>
+
+&nbsp;                               <div className="mb-3">
+
+&nbsp;                                   <label className="form-label">Nombre</label>
+
+&nbsp;                                   <input 
+
+&nbsp;           type="text" 
+
+&nbsp;           name="nombre" 
+
+&nbsp;           // Si hay error en 'nombre', agregamos la clase 'is-invalid'
+
+&nbsp;           className={`form-control ${erroresBackend.nombre ? 'is-invalid' : ''}`} 
+
+&nbsp;           value={formData.nombre} 
+
+&nbsp;           onChange={handleChange} 
+
+&nbsp;           required 
+
+&nbsp;           disabled={cargandoGuardar} 
+
+&nbsp;       />
+
+{erroresBackend.nombre \&\& (
+
+&nbsp;           <div className="invalid-feedback">
+
+&nbsp;               {erroresBackend.nombre.join(', ')}
+
+&nbsp;           </div>
+
+&nbsp;       )}                                </div>
+
+&nbsp;                               <div className="mb-3">
+
+&nbsp;                                   <label className="form-label">Especie</label>
+
+&nbsp;                                   <input 
+
+&nbsp;           type="text" 
+
+&nbsp;           name="especie" 
+
+&nbsp;           placeholder="Ej. perro, gato" 
+
+&nbsp;           className={`form-control ${erroresBackend.especie ? 'is-invalid' : ''}`} 
+
+&nbsp;           value={formData.especie} 
+
+&nbsp;           onChange={handleChange} 
+
+&nbsp;           required 
+
+&nbsp;           disabled={cargandoGuardar} 
+
+&nbsp;       />
+
+{erroresBackend.especie \&\& (
+
+&nbsp;           <div className="invalid-feedback">
+
+&nbsp;               {erroresBackend.especie.join(', ')}
+
+&nbsp;           </div>
+
+&nbsp;       )}
+
+&nbsp;                               </div>
+
+&nbsp;                               <div className="mb-3">
+
+&nbsp;                                   <label className="form-label">Edad</label>
+
+&nbsp;                                   <input 
+
+&nbsp;           type="number" 
+
+&nbsp;           name="edad" 
+
+&nbsp;           className={`form-control ${erroresBackend.edad ? 'is-invalid' : ''}`} 
+
+&nbsp;           value={formData.edad} 
+
+&nbsp;           onChange={handleChange} 
+
+&nbsp;           required 
+
+&nbsp;           disabled={cargandoGuardar} 
+
+&nbsp;       />
+
+&nbsp;       {erroresBackend.edad \&\& (
+
+&nbsp;           <div className="invalid-feedback">
+
+&nbsp;               {erroresBackend.edad.join(', ')}
+
+&nbsp;           </div>
+
+&nbsp;       )}                                </div>
+
+&nbsp;                               <div className="d-grid gap-2">
+
+&nbsp;       <button type="submit" className="btn btn-success" disabled={cargandoGuardar}>
+
+&nbsp;           {cargandoGuardar ? (
+
+&nbsp;               <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Guardando...</>
+
+&nbsp;           ) : (
+
+&nbsp;               editandoId ? 'Actualizar' : 'Guardar'
+
+&nbsp;           )}
+
+&nbsp;       </button>
+
+&nbsp;       {editandoId \&\& (
+
+&nbsp;           <button type="button" className="btn btn-secondary" onClick={() => { setEditandoId(null); setFormData({ nombre: '', especie: '', edad: '' }); setErroresBackend({}); }} disabled={cargandoGuardar}>
+
+&nbsp;               Cancelar
+
+&nbsp;           </button>
+
+&nbsp;       )}
+
+&nbsp;   </div>
+
+&nbsp;                           </form>
+
+&nbsp;                       </div>
+
+&nbsp;                   </div>
+
+&nbsp;               </div>
+
+
+
+&nbsp;               <div className="col-md-8">
+
+&nbsp;                   <div className="card shadow-sm">
+
+&nbsp;                       <div className="card-body p-0 pt-3">
+
+&nbsp;                           <DataTable
+
+&nbsp;                               title="Lista de Mascotas"
+
+&nbsp;                               columns={columnas}
+
+&nbsp;                               data={mascotasFiltradas}
+
+&nbsp;                               pagination
+
+&nbsp;                               paginationPerPage={5}
+
+&nbsp;                               highlightOnHover
+
+&nbsp;                               responsive
+
+&nbsp;                               subHeader
+
+&nbsp;                               subHeaderComponent={barraDeBusqueda}
+
+&nbsp;                               subHeaderAlign="right"
+
+&nbsp;                               noDataComponent="No hay mascotas que coincidan con la búsqueda"                             
+
+&nbsp;                               progressPending={cargandoTabla}
+
+&nbsp;                               progressComponent={<SpinnerTabla />}
+
+&nbsp;                           />
+
+&nbsp;                       </div>
+
+&nbsp;                   </div>
+
+&nbsp;               </div>
+
+&nbsp;           </div>
+
+&nbsp;       </div>
+
+&nbsp;   );
+
+}
+
+
+
+
+
+En un proyecto creado con Vite, el archivo principal que se dibuja en la pantalla suele ser App.jsx (ubicado dentro de la carpeta src). Todo lo que pongamos dentro de App.jsx es lo que se verá en el navegador.
+
+
+
+1\. Edita el archivo App.jsx
+
+Abre el archivo src/App.jsx. Borra todo el código de demostración que Vite pone por defecto (los logos, el contador, etc.) y reemplázalo por esto:
+
+
+
+import MascotasApp from './MascotasApp'; // <-- Importamos el componente
+
+
+
+function App() {
+
+&nbsp; return (
+
+&nbsp;   <div>
+
+&nbsp;     {/\* Aquí estamos "inyectando" el componente en la pantalla principal \*/}
+
+&nbsp;     <MascotasApp />
+
+&nbsp;   </div>
+
+&nbsp; );
+
+}
+
+
+
+export default App;
+
+
+
+
+
+2\. Levanta el servidor de desarrollo
+
+Abre tu terminal, asegúrate de estar dentro de la carpeta de tu proyecto React (donde está el archivo package.json) y ejecuta este comando para iniciar Vite:
+
+
+
+npm run dev
+
+
+
+
+
+3\. Ábrelo en tu navegador
+
+En tu terminal aparecerá un texto verde indicando que el servidor está corriendo en una dirección local. Casi siempre es http://localhost:5173/.
+
+
+
+Mantén presionada la tecla Ctrl y haz clic en ese enlace en tu terminal (o cópialo y pégalo directamente en la barra de direcciones de tu navegador de internet).
+
+
+
+
+
+#### Configuración del proyecto Back
+
+
+
+1\. Instalar el paquete
+
+Abre la terminal donde tienes corriendo tu entorno virtual de Django (o tu contenedor) y ejecuta:
+
+
+
+pip install django-cors-headers
+
+
+
+
+
+2\. Agregarlo a tus aplicaciones instaladas
+
+Abre tu archivo settings.py (dentro de la carpeta principal de tu proyecto Django) y busca la lista INSTALLED\_APPS. Agrega 'corsheaders':
+
+
+
+INSTALLED\_APPS = \[
+
+    # ... otras aplicaciones de Django ...
+
+    'corsheaders', # <--- Agrega esta línea
+
+    # ... tus aplicaciones ...
+
+]
+
+
+
+
+
+3\. Configurar el Middleware (Importante: El orden de las Strings cuenta)
+
+En el mismo archivo settings.py, busca la lista MIDDLEWARE. Tienes que agregar el middleware de CORS, pero debe ir lo más arriba posible, específicamente antes del CommonMiddleware de Django.
+
+
+
+MIDDLEWARE = \[
+
+    'django.middleware.security.SecurityMiddleware',
+
+    'corsheaders.middleware.CorsMiddleware', # <--- ¡AGRÉGALO AQUÍ!
+
+    'django.contrib.sessions.middleware.SessionMiddleware',
+
+    'django.middleware.common.CommonMiddleware', # <-- Este tiene que estar debajo del de CORS
+
+    # ... otros middlewares ...
+
+]
+
+
+
+
+
+4\. Autorizar el puerto de tu React
+
+Finalmente, ve al final de tu archivo settings.py y crea una lista con las URLs que tienen permiso para comunicarse con tu API.
+
+
+
+\# Permite que estas URLs consuman tu API
+
+CORS\_ALLOWED\_ORIGINS = \[
+
+&nbsp;   "http://localhost:5173", # Puerto por defecto de Vite
+
+&nbsp;   "http://127.0.0.1:5173",
+
+]
+
+
+
+
+
+(Opcional pero poco recomendado para producción): Si estás solo en desarrollo local y no quieres lidiar con dominios específicos por ahora, puedes permitir cualquier origen con esta línea en lugar de la lista anterior: CORS\_ALLOW\_ALL\_ORIGINS = True. Úsalo bajo tu propio riesgo en desarrollo, pero nunca lo dejes así al publicar tu página en internet.
+
+
+
+##### 
+
+Usar Django REST Framework
+
+
+
+1\. Instalar y configurar Django REST Framework
+
+En tu terminal, instala el paquete:
+
+
+
+pip install djangorestframework
+
+
+
+
+
+Luego, en tu settings.py, agrégalo a tus aplicaciones (justo como hiciste con CORS):
+
+
+
+INSTALLED\_APPS = \[
+
+&nbsp;   # ... otras apps ...
+
+&nbsp;   'rest\_framework', # <--- Agrega esto
+
+&nbsp;   'corsheaders',
+
+&nbsp;   # ... tus apps ...
+
+]
+
+
+
+
+
+2\. Crear un "Serializer" (El traductor)
+
+En la carpeta de tu aplicación (donde tienes models.py), crea un archivo llamado serializers.py.
+
+El "Serializer" hace la magia de convertir tu modelo a JSON (para que React lo lea) y de convertir el FormData/JSON que envía React de vuelta a tu modelo.
+
+
+
+\# serializers.py
+
+from rest\_framework import serializers
+
+from .models import Mascota  # <--- Aquí va el o los modelos a serializar
+
+
+
+class MascotaSerializer(serializers.ModelSerializer):
+
+&nbsp;   class Meta:
+
+&nbsp;       model = Mascota
+
+&nbsp;       fields = '\_\_all\_\_' # Expone todos los campos del modelo (id, nombre, especie, etc.)
+
+
+
+
+
+3\. Crear el "ViewSet" (El controlador automático)
+
+Ahora ve a tu archivo views.py. Usa esta clase:
+
+
+
+\# views.py
+
+from rest\_framework import viewsets
+
+from .models import Mascota  # <--- El modelo 
+
+from .serializers import MascotaSerializer # <-- El serializador del modelo
+
+
+
+class MascotaViewSet(viewsets.ModelViewSet):
+
+&nbsp;   queryset = Mascota.objects.all()
+
+&nbsp;   serializer\_class = MascotaSerializer
+
+
+
+
+
+¡Y listo! Ese ModelViewSet ya incluye por defecto el código para LISTAR, CREAR, ACTUALIZAR y ELIMINAR.
+
+
+
+
+
+4\. Configurar las URLs automáticamente
+
+Finalmente, en tu archivo urls.py, vamos a usar un "Router" de DRF. Esto crea automáticamente las rutas (semanticas) sin que tengas que escribirlas una por una:
+
+
+
+
+
+\# urls.py
+
+from django.urls import path, include
+
+from rest\_framework.routers import DefaultRouter
+
+from .views import MascotaViewSet
+
+
+
+\# Creamos el router y registramos nuestro ViewSet
+
+router = DefaultRouter()
+
+router.register(r'mascotas', MascotaViewSet, basename='mascota')
+
+
+
+urlpatterns = \[
+
+&nbsp;   # Incluimos todas las rutas generadas por el router bajo el prefijo 'api/'
+
+&nbsp;   path('api/', include(router.urls)), 
+
+]
+
+
+-----------------------------------------------------------------------------------------------
+
+Conectar MySQL al proyecto Django:
+
+1) instalar el conector -->
+
+	py -m pip install mysqlclient
+
+2) configura la conexión en settings.py -->
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'nombre_de_tu_bd',
+        'USER': 'tu_usuario',
+        'PASSWORD': 'tu_password',
+        'HOST': 'localhost',  # O la IP de tu servidor
+        'PORT': '3306',
+    }
+}
+
+3) Ejecuta este comando en tu terminal -->
+
+	py -m manage.py inspectdb > models.py

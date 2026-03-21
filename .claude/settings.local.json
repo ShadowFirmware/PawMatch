@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(py manage.py migrate pets_app)",
+      "Bash(py manage.py check)",
+      "Bash(echo \":*)",
+      "Bash(\"c:/Users/luisp/PawMatch/404-not-found/src/components/dashboard/ProfileSettings.css\")",
+      "Bash(npm install:*)",
+      "Bash(\"c:/Users/luisp/PawMatch/404-not-found/.env\")",
+      "Bash(npm run:*)",
+      "Bash(grep -E \"^vite$\")",
+      "Bash(npm --version)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\(''''packages'''',{}\\).keys\\(\\)\\)[:10]\\)\")",
+      "Bash(npx --yes vite --version)",
+      "Bash(npm cache:*)",
+      "Bash(rm -rf node_modules package-lock.json)",
+      "Bash(grep -E \"^vite$|^react$\")",
+      "Bash(node node_modules/vite/bin/vite.js --version)",
+      "Bash(python -c \"import matches_app.views; print\\(''OK''\\)\")",
+      "Bash(py -c \"import django; import os; os.environ.setdefault\\(''DJANGO_SETTINGS_MODULE'',''PawMatch.settings''\\); django.setup\\(\\); import matches_app.views; print\\(''OK''\\)\")",
+      "Bash(node node_modules/vite/bin/vite.js build)",
+      "Bash(xargs grep:*)",
+      "Bash(py -c \":*)",
+      "Bash(find c:UsersluispPawMatch -type f \\\\\\(-name .env* -o -name *.env \\\\\\))",
+      "Bash(ipconfig)",
+      "Bash(where python3:*)",
+      "Bash(where python:*)",
+      "Bash(python3 manage.py makemigrations auth_app)",
+      "Bash(ls c:/Users/luisp/AppData/Local/Programs/Python/Python*/python.exe)",
+      "Bash(\"c:/Users/luisp/AppData/Local/Programs/Python/Python313/python.exe\" manage.py makemigrations auth_app)",
+      "Bash(\"c:/Users/luisp/AppData/Local/Programs/Python/Python313/python.exe\" manage.py migrate auth_app)"
+    ]
+  }
+}
