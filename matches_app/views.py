@@ -288,6 +288,39 @@ class MatchViewSet(viewsets.ModelViewSet):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['get'], url_path='my-pets-overview')
+    def my_pets_overview(self, request):
+        """Resumen por mascota del usuario: likes pendientes y matches aceptados."""
+        from urllib.parse import quote as url_quote
+        mis_mascotas = Mascota.objects.filter(dueño=request.user)
+
+        result = []
+        for mascota in mis_mascotas:
+            likes_pendientes = Match.objects.filter(
+                mascota2=mascota, estado='Pendiente'
+            ).count()
+            matches_aceptados = Match.objects.filter(
+                Q(mascota1=mascota) | Q(mascota2=mascota),
+                estado='Aceptado'
+            ).count()
+
+            foto = mascota.foto_url or ''
+            if foto and not foto.startswith('http'):
+                foto = request.build_absolute_uri(url_quote(foto, safe='/:'))
+
+            result.append({
+                'mascota_id': mascota.mascota_id,
+                'nombre': mascota.nombre,
+                'especie': mascota.especie,
+                'raza': mascota.raza or '',
+                'edad': mascota.edad,
+                'foto_url': foto,
+                'likes_pendientes': likes_pendientes,
+                'matches_aceptados': matches_aceptados,
+            })
+
+        return Response(result)
+
     @action(detail=False, methods=['get'], url_path='all-matches')
     def all_matches(self, request):
         """Obtener todos los matches aceptados del usuario (todas sus mascotas)"""
