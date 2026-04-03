@@ -32,33 +32,33 @@ def calcular_compatibilidad_caracteristicas(mascota1, mascota2):
     """Calcula la compatibilidad basada en características (50% del peso)"""
     score = 0
     max_score = 5
-    
-    # Misma especie
+
+    # Misma especie — base fundamental del match (peso alto)
     if mascota1.especie.lower() == mascota2.especie.lower():
-        score += 1
-    
-    # Edad similar (diferencia de máximo 3 años)
+        score += 2
+
+    # Edad similar — energía compatible
     if mascota1.edad is not None and mascota2.edad is not None:
         edad_diff = abs(mascota1.edad - mascota2.edad)
-        if edad_diff <= 1:
+        if edad_diff == 0:
+            score += 1.5
+        elif edad_diff <= 2:
             score += 1
-        elif edad_diff <= 3:
+        elif edad_diff <= 4:
             score += 0.5
-    
-    # Género compatible (puedes ajustar según preferencias)
-    if mascota1.género != mascota2.género or mascota1.género == 'Otro' or mascota2.género == 'Otro':
-        score += 1
-    
-    # Misma raza (bonus)
+
+    # Misma raza — bonus de afinidad
     if mascota1.raza and mascota2.raza and mascota1.raza.lower() == mascota2.raza.lower():
         score += 1
-    
-    # Descripción similar (básico - puedes mejorar con NLP)
+
+    # Personalidad/descripción similar — similitud Jaccard sobre palabras significativas
     if mascota1.descripción and mascota2.descripción:
-        palabras_comunes = set(mascota1.descripción.lower().split()) & set(mascota2.descripción.lower().split())
-        if len(palabras_comunes) > 0:
-            score += 1
-    
+        palabras1 = {w.lower() for w in mascota1.descripción.split() if len(w) > 3}
+        palabras2 = {w.lower() for w in mascota2.descripción.split() if len(w) > 3}
+        if palabras1 and palabras2:
+            jaccard = len(palabras1 & palabras2) / len(palabras1 | palabras2)
+            score += jaccard * 0.5  # Máximo 0.5 pts
+
     return (score / max_score) * 0.5  # 50% del peso total
 
 
@@ -142,7 +142,12 @@ class MatchViewSet(viewsets.ModelViewSet):
 
             if ya_actue or ya_aceptado:
                 continue
-            
+
+            # ¿Esta mascota ya me dio like? → mostrarla primero con badge
+            liked_me = Match.objects.filter(
+                mascota1=otra_mascota, mascota2=mascota, estado='Pendiente'
+            ).exists()
+
             # Calcular compatibilidad
             compat_caracteristicas = calcular_compatibilidad_caracteristicas(mascota, otra_mascota)
             compat_ubicacion = calcular_compatibilidad_ubicacion(
@@ -150,9 +155,9 @@ class MatchViewSet(viewsets.ModelViewSet):
                 otra_mascota.dueño.ubicación,
                 distancia_max
             )
-            
+
             score_total = compat_caracteristicas + compat_ubicacion
-            
+
             # Solo incluir si está dentro del rango de distancia
             # Si alguno tiene '0,0' (sin ubicación configurada), incluir igualmente
             try:
@@ -164,7 +169,8 @@ class MatchViewSet(viewsets.ModelViewSet):
                     matches_potenciales.append({
                         'mascota': otra_mascota,
                         'score': score_total,
-                        'distancia': None
+                        'distancia': None,
+                        'liked_me': liked_me,
                     })
                 else:
                     lat1, lon1 = map(float, ub1.split(','))
@@ -174,14 +180,15 @@ class MatchViewSet(viewsets.ModelViewSet):
                         matches_potenciales.append({
                             'mascota': otra_mascota,
                             'score': score_total,
-                            'distancia': round(distancia, 2)
+                            'distancia': round(distancia, 2),
+                            'liked_me': liked_me,
                         })
             except Exception:
                 continue
-        
-        # Ordenar por score descendente
-        matches_potenciales.sort(key=lambda x: x['score'], reverse=True)
-        
+
+        # Ordenar: primero los que ya dieron like, luego por score descendente
+        matches_potenciales.sort(key=lambda x: (not x['liked_me'], -x['score']))
+
         # Serializar resultados
         from pets_app.serializers import MascotaSerializer
         resultados = []
@@ -190,7 +197,8 @@ class MatchViewSet(viewsets.ModelViewSet):
             resultados.append({
                 'mascota': mascota_data,
                 'score': round(match['score'], 2),
-                'distancia_km': match['distancia']
+                'distancia_km': match['distancia'],
+                'liked_me': match['liked_me'],
             })
         
         return Response(resultados)
