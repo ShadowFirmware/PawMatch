@@ -38,11 +38,12 @@ def calcular_compatibilidad_caracteristicas(mascota1, mascota2):
         score += 1
     
     # Edad similar (diferencia de máximo 3 años)
-    edad_diff = abs(mascota1.edad - mascota2.edad)
-    if edad_diff <= 1:
-        score += 1
-    elif edad_diff <= 3:
-        score += 0.5
+    if mascota1.edad is not None and mascota2.edad is not None:
+        edad_diff = abs(mascota1.edad - mascota2.edad)
+        if edad_diff <= 1:
+            score += 1
+        elif edad_diff <= 3:
+            score += 0.5
     
     # Género compatible (puedes ajustar según preferencias)
     if mascota1.género != mascota2.género or mascota1.género == 'Otro' or mascota2.género == 'Otro':
