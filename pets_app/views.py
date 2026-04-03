@@ -26,6 +26,18 @@ class MascotaViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(mascotas, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path='discover')
+    def discover(self, request):
+        """Todas las mascotas de otros usuarios para la vista general"""
+        mascotas = (
+            Mascota.objects
+            .exclude(dueño=request.user)
+            .select_related('dueño')
+            .order_by('-mascota_id')
+        )
+        serializer = self.get_serializer(mascotas, many=True, context={'request': request})
+        return Response(serializer.data)
+
 
 class FotoMascotaViewSet(viewsets.ModelViewSet):
     serializer_class = FotoMascotaSerializer
