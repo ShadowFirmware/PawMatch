@@ -91,7 +91,11 @@ class MascotaSerializer(serializers.ModelSerializer):
         if hasattr(data, 'getlist'):
             return data.getlist('characteristics')
         raw = data.get('characteristics', [])
-        return raw if isinstance(raw, list) else [raw] if raw else []
+        if isinstance(raw, list):
+            return raw
+        if raw:
+            return [raw]
+        return []
 
     def to_internal_value(self, data):
         """
