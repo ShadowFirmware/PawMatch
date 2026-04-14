@@ -7,6 +7,10 @@ ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/gif', 'image/webp'}
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
 MAX_PHOTO_SIZE = 5 * 1024 * 1024  # 5 MB
 
+DUENO_FIELD = 'dueño'
+GENERO_FIELD = 'género'
+DESCRIPCION_FIELD = 'descripción'
+
 
 def sanitize_filename(name):
     """Reemplaza espacios y caracteres especiales para que el nombre sea URL-safe."""
@@ -68,17 +72,17 @@ class MascotaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mascota
         fields = [
-            'mascota_id', 'dueño', 'dueño_nombre', 'dueño_email',
-            'nombre', 'especie', 'raza', 'edad', 'género',
-            'descripción', 'foto_url', 'fotos'
+            'mascota_id', DUENO_FIELD, 'dueño_nombre', 'dueño_email',
+            'nombre', 'especie', 'raza', 'edad', GENERO_FIELD,
+            DESCRIPCION_FIELD, 'foto_url', 'fotos'
         ]
-        read_only_fields = ['mascota_id', 'dueño']
+        read_only_fields = ['mascota_id', DUENO_FIELD]
         extra_kwargs = {
             'nombre': {'required': False},
             'especie': {'required': False},
             'raza': {'required': False},
             'edad': {'required': False},
-            'género': {'required': False},
+            GENERO_FIELD: {'required': False},
             'foto_url': {'required': False},
         }
 
@@ -97,7 +101,7 @@ class MascotaSerializer(serializers.ModelSerializer):
         }
 
         # Campos backend que pasan directo
-        passthrough = ['nombre', 'especie', 'raza', 'edad', 'género', 'descripción', 'foto_url']
+        passthrough = ['nombre', 'especie', 'raza', 'edad', GENERO_FIELD, DESCRIPCION_FIELD, 'foto_url']
 
         normalized = {}
 
@@ -113,7 +117,7 @@ class MascotaSerializer(serializers.ModelSerializer):
                 normalized[field] = data[field]
 
         # Manejar characteristics (array) → descripción (string)
-        if 'characteristics' in data and 'descripción' not in normalized:
+        if 'characteristics' in data and DESCRIPCION_FIELD not in normalized:
             if hasattr(data, 'getlist'):
                 # QueryDict (multipart/form-data): puede tener múltiples valores
                 chars = data.getlist('characteristics')
@@ -122,7 +126,7 @@ class MascotaSerializer(serializers.ModelSerializer):
                 chars = raw if isinstance(raw, list) else [raw] if raw else []
 
             if chars:
-                normalized['descripción'] = ', '.join(str(c) for c in chars if c)
+                normalized[DESCRIPCION_FIELD] = ', '.join(str(c) for c in chars if c)
 
         return super().to_internal_value(normalized)
 
@@ -132,8 +136,8 @@ class MascotaSerializer(serializers.ModelSerializer):
         photo = request.FILES.get('photo') if request else None
 
         # Validar límite de 5 mascotas por dueño
-        dueño = validated_data.get('dueño')
-        if dueño and Mascota.objects.filter(dueño=dueño).count() >= 5:
+        dueno = validated_data.get(DUENO_FIELD)
+        if dueno and Mascota.objects.filter(dueño=dueno).count() >= 5:
             raise serializers.ValidationError('No puedes registrar más de 5 mascotas por dueño.')
 
         mascota = Mascota(**validated_data)
@@ -171,7 +175,7 @@ class PreferenciaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Preferencia
         fields = [
-            'pref_id', 'dueño', 'especie_pref', 'edad_pref_min',
+            'pref_id', DUENO_FIELD, 'especie_pref', 'edad_pref_min',
             'edad_pref_max', 'género_pref', 'distancia_max'
         ]
-        read_only_fields = ['pref_id', 'dueño']
+        read_only_fields = ['pref_id', DUENO_FIELD]

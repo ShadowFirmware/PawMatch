@@ -11,6 +11,9 @@ from .audit import log_event
 
 logger = logging.getLogger('pawmatch.errors')
 
+ERROR_CREAR_USUARIO = 'Error al crear usuario'
+ERROR_INTERNO_SERVIDOR = 'Error interno del servidor'
+
 
 class DueñoViewSet(viewsets.ModelViewSet):
     serializer_class = DueñoSerializer
@@ -35,14 +38,14 @@ class DueñoViewSet(viewsets.ModelViewSet):
         try:
             serializer = PerfilSerializer(data=request.data, partial=True)
             if serializer.is_valid():
-                dueño = request.user
+                dueno = request.user
                 for field, value in serializer.validated_data.items():
-                    setattr(dueño, field, value)
-                dueño.save()
+                    setattr(dueno, field, value)
+                dueno.save()
                 log_event('perfil_actualizado', request=request)
                 return Response({
                     'message': 'Perfil actualizado exitosamente',
-                    'user': DueñoSerializer(dueño).data,
+                    'user': DueñoSerializer(dueno).data,
                 })
             return Response({
                 'error': 'Datos inválidos',
@@ -77,10 +80,10 @@ class PerfilViewSet(viewsets.ViewSet):
     def update(self, request, pk=None):
         serializer = PerfilSerializer(data=request.data, partial=True)
         if serializer.is_valid():
-            dueño = request.user
+            dueno = request.user
             for field, value in serializer.validated_data.items():
-                setattr(dueño, field, value)
-            dueño.save()
+                setattr(dueno, field, value)
+            dueno.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -114,9 +117,9 @@ def register_view(request):
                     status=status.HTTP_201_CREATED,
                 )
             except Exception:
-                logger.exception('Error al crear usuario')
+                logger.exception(ERROR_CREAR_USUARIO)
                 return Response(
-                    {'error': 'Error al crear usuario'},
+                    {'error': ERROR_CREAR_USUARIO},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
         return Response(
@@ -126,7 +129,7 @@ def register_view(request):
     except Exception:
         logger.exception('Error en register_view')
         return Response(
-            {'error': 'Error interno del servidor'},
+            {'error': ERROR_INTERNO_SERVIDOR},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
@@ -143,35 +146,35 @@ def google_auth_view(request):
             foto_url = google_data.get('picture', '')
 
             try:
-                dueño = Dueño.objects.get(email=email)
+                dueno = Dueño.objects.get(email=email)
                 is_new_user = False
             except Dueño.DoesNotExist:
                 try:
-                    dueño = Dueño.objects.create_user(email=email, nombre=nombre, ubicación='0,0')
-                    dueño.set_unusable_password()
+                    dueno = Dueño.objects.create_user(email=email, nombre=nombre, ubicación='0,0')
+                    dueno.set_unusable_password()
                     if foto_url:
-                        dueño.foto_perfil = foto_url
-                    dueño.save()
+                        dueno.foto_perfil = foto_url
+                    dueno.save()
                     is_new_user = True
                 except Exception:
-                    logger.exception('Error al crear usuario Google')
+                    logger.exception(ERROR_CREAR_USUARIO)
                     return Response(
-                        {'error': 'Error al crear usuario'},
+                        {'error': ERROR_CREAR_USUARIO},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     )
 
-            token, _ = Token.objects.get_or_create(user=dueño)
-            log_event('oauth_google', request=request, usuario=dueño, detalles={'new': is_new_user})
+            token, _ = Token.objects.get_or_create(user=dueno)
+            log_event('oauth_google', request=request, usuario=dueno, detalles={'new': is_new_user})
             return Response({
                 'token': token.key,
-                'user': DueñoSerializer(dueño).data,
+                'user': DueñoSerializer(dueno).data,
                 'is_new_user': is_new_user,
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception:
         logger.exception('Error en google_auth_view')
         return Response(
-            {'error': 'Error interno del servidor'},
+            {'error': ERROR_INTERNO_SERVIDOR},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
@@ -188,27 +191,27 @@ def facebook_auth_view(request):
             foto_url = fb_data.get('picture', {}).get('data', {}).get('url', '')
 
             try:
-                dueño = Dueño.objects.get(email=email)
+                dueno = Dueño.objects.get(email=email)
                 is_new_user = False
             except Dueño.DoesNotExist:
-                dueño = Dueño.objects.create_user(email=email, nombre=nombre, ubicación='0,0')
-                dueño.set_unusable_password()
+                dueno = Dueño.objects.create_user(email=email, nombre=nombre, ubicación='0,0')
+                dueno.set_unusable_password()
                 if foto_url:
-                    dueño.foto_perfil = foto_url
-                dueño.save()
+                    dueno.foto_perfil = foto_url
+                dueno.save()
                 is_new_user = True
 
-            token, _ = Token.objects.get_or_create(user=dueño)
-            log_event('oauth_facebook', request=request, usuario=dueño, detalles={'new': is_new_user})
+            token, _ = Token.objects.get_or_create(user=dueno)
+            log_event('oauth_facebook', request=request, usuario=dueno, detalles={'new': is_new_user})
             return Response({
                 'token': token.key,
-                'user': DueñoSerializer(dueño).data,
+                'user': DueñoSerializer(dueno).data,
                 'is_new_user': is_new_user,
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception:
         logger.exception('Error en facebook_auth_view')
         return Response(
-            {'error': 'Error interno del servidor'},
+            {'error': ERROR_INTERNO_SERVIDOR},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )

@@ -159,13 +159,15 @@ GOOGLE_OAUTH2_CLIENT_ID = os.environ.get('GOOGLE_OAUTH2_CLIENT_ID', '')
 GOOGLE_OAUTH2_CLIENT_SECRET = os.environ.get('GOOGLE_OAUTH2_CLIENT_SECRET', '')
 
 # ── Cabeceras de seguridad HTTP ───────────────────────────────────────────────
-SECURE_CONTENT_TYPE_NOSNIFF = True       # X-Content-Type-Options: nosniff
-SECURE_BROWSER_XSS_FILTER = True        # X-XSS-Protection: 1; mode=block
-X_FRAME_OPTIONS = 'DENY'               # X-Frame-Options: DENY (anti-clickjacking)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
 
 # ── Bitácora (logging) ────────────────────────────────────────────────────────
 LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)
+
+ROTATING_FILE_HANDLER = 'logging.handlers.RotatingFileHandler'
 
 LOGGING = {
     'version': 1,
@@ -183,7 +185,7 @@ LOGGING = {
             'formatter': 'verbose',
         },
         'file_general': {
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': ROTATING_FILE_HANDLER,
             'filename': str(LOGS_DIR / 'pawmatch.log'),
             'maxBytes': 5 * 1024 * 1024,  # 5 MB
             'backupCount': 5,
@@ -191,7 +193,7 @@ LOGGING = {
             'encoding': 'utf-8',
         },
         'file_security': {
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': ROTATING_FILE_HANDLER,
             'filename': str(LOGS_DIR / 'security.log'),
             'maxBytes': 5 * 1024 * 1024,
             'backupCount': 10,
@@ -199,7 +201,7 @@ LOGGING = {
             'encoding': 'utf-8',
         },
         'file_errors': {
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': ROTATING_FILE_HANDLER,
             'filename': str(LOGS_DIR / 'errors.log'),
             'maxBytes': 5 * 1024 * 1024,
             'backupCount': 5,

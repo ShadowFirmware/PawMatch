@@ -1,16 +1,18 @@
 from django.contrib import admin
 from .models import Dueño
 
+DUENO_ID_FIELD = 'dueño_id'
+
 
 @admin.register(Dueño)
-class DueñoAdmin(admin.ModelAdmin):
-    list_display = ['dueño_id', 'nombre', 'email', 'fecha_registro', 'is_active', 'ciudad', 'estado']
+class DuenoAdmin(admin.ModelAdmin):
+    list_display = [DUENO_ID_FIELD, 'nombre', 'email', 'fecha_registro', 'is_active', 'ciudad', 'estado']
     list_filter = ['is_active', 'fecha_registro', 'genero', 'ciudad', 'estado']
     search_fields = ['nombre', 'email', 'ciudad', 'estado']
-    readonly_fields = ['dueño_id', 'fecha_registro']
+    readonly_fields = [DUENO_ID_FIELD, 'fecha_registro']
     fieldsets = (
         ('Información Básica', {
-            'fields': ('dueño_id', 'nombre', 'email', 'ubicación', 'fecha_registro')
+            'fields': (DUENO_ID_FIELD, 'nombre', 'email', 'ubicación', 'fecha_registro')
         }),
         ('Perfil', {
             'fields': ('foto_perfil', 'telefono', 'biografia', 'fecha_nacimiento', 'genero', 

@@ -3,6 +3,8 @@ from django.contrib.auth import authenticate
 from .models import Dueño, Perfil
 import requests
 
+UBICACION_FIELD = 'ubicación'
+
 
 class PerfilSerializer(serializers.Serializer):
     """Serializer para los campos de perfil que están en Dueño"""
@@ -29,7 +31,7 @@ class DueñoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dueño
         fields = [
-            'dueño_id', 'nombre', 'email', 'password', 'ubicación', 
+            'dueño_id', 'nombre', 'email', 'password', UBICACION_FIELD, 
             'fecha_registro', 'foto_perfil', 'telefono', 'biografia',
             'fecha_nacimiento', 'genero', 'ciudad', 'estado', 'pais',
             'mostrar_telefono', 'mostrar_email', 'perfil'
@@ -40,7 +42,7 @@ class DueñoSerializer(serializers.ModelSerializer):
             'fecha_registro': {'read_only': True},
             'nombre': {'required': True},
             'email': {'required': True},
-            'ubicación': {'required': True},
+            UBICACION_FIELD: {'required': True},
             'foto_perfil': {'required': False, 'allow_null': True},
             'telefono': {'required': False, 'allow_null': True},
             'biografia': {'required': False, 'allow_null': True},
@@ -75,11 +77,11 @@ class DueñoSerializer(serializers.ModelSerializer):
         
         try:
             # Crear usuario con contraseña
-            dueño = Dueño.objects.create_user(
+            dueno = Dueño.objects.create_user(
                 password=password,
                 email=validated_data.get('email'),
                 nombre=validated_data.get('nombre'),
-                ubicación=validated_data.get('ubicación', '0,0'),
+                ubicación=validated_data.get(UBICACION_FIELD, '0,0'),
             )
             
             # Actualizar campos de perfil si vienen en los datos
@@ -87,10 +89,10 @@ class DueñoSerializer(serializers.ModelSerializer):
                            'genero', 'ciudad', 'estado', 'pais', 'mostrar_telefono', 'mostrar_email']
             for campo in campos_perfil:
                 if campo in validated_data:
-                    setattr(dueño, campo, validated_data[campo])
+                    setattr(dueno, campo, validated_data[campo])
             
-            dueño.save()
-            return dueño
+            dueno.save()
+            return dueno
         except Exception as e:
             raise serializers.ValidationError({'error': f'Error al crear usuario: {str(e)}'})
 

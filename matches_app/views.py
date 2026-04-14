@@ -12,6 +12,10 @@ from .serializers import (
 from pets_app.models import Mascota, Preferencia
 from auth_app.models import Dueño
 
+ESTADO_ACEPTADO = 'Aceptado'
+ESTADO_PENDIENTE = 'Pendiente'
+ESTADO_RECHAZADO = 'Rechazado'
+
 
 def calcular_distancia(lat1, lon1, lat2, lon2):
     """Calcula la distancia entre dos puntos geográficos en kilómetros usando la fórmula de Haversine"""
@@ -137,7 +141,7 @@ class MatchViewSet(viewsets.ModelViewSet):
             ya_aceptado = Match.objects.filter(
                 Q(mascota1=mascota, mascota2=otra_mascota) |
                 Q(mascota1=otra_mascota, mascota2=mascota),
-                estado='Aceptado'
+                estado=ESTADO_ACEPTADO
             ).exists()
 
             if ya_actue or ya_aceptado:
@@ -145,7 +149,7 @@ class MatchViewSet(viewsets.ModelViewSet):
 
             # ¿Esta mascota ya me dio like? → mostrarla primero con badge
             liked_me = Match.objects.filter(
-                mascota1=otra_mascota, mascota2=mascota, estado='Pendiente'
+                mascota1=otra_mascota, mascota2=mascota, estado=ESTADO_PENDIENTE
             ).exists()
 
             # Calcular compatibilidad
@@ -224,17 +228,17 @@ class MatchViewSet(viewsets.ModelViewSet):
         ya_aceptado = Match.objects.filter(
             Q(mascota1=mascota1, mascota2=mascota2) |
             Q(mascota1=mascota2, mascota2=mascota1),
-            estado='Aceptado'
+            estado=ESTADO_ACEPTADO
         ).first()
         if ya_aceptado:
             return Response({'match': MatchSerializer(ya_aceptado).data, 'es_match': True})
 
         # ¿La otra mascota ya me dio like? → match mutuo
         like_previo = Match.objects.filter(
-            mascota1=mascota2, mascota2=mascota1, estado='Pendiente'
+            mascota1=mascota2, mascota2=mascota1, estado=ESTADO_PENDIENTE
         ).first()
         if like_previo:
-            like_previo.estado = 'Aceptado'
+            like_previo.estado = ESTADO_ACEPTADO
             like_previo.save()
             # Limpiar duplicado inverso si existiera (datos viejos)
             Match.objects.filter(mascota1=mascota1, mascota2=mascota2).delete()
@@ -268,7 +272,7 @@ class MatchViewSet(viewsets.ModelViewSet):
             ya_aceptado = Match.objects.filter(
                 Q(mascota1=mascota1, mascota2=mascota2) |
                 Q(mascota1=mascota2, mascota2=mascota1),
-                estado='Aceptado'
+                estado=ESTADO_ACEPTADO
             ).first()
             if ya_aceptado:
                 return Response({'message': 'Ya tienes un match aceptado con esta mascota'})
@@ -277,11 +281,11 @@ class MatchViewSet(viewsets.ModelViewSet):
             match, created = Match.objects.get_or_create(
                 mascota1=mascota1,
                 mascota2=mascota2,
-                defaults={'estado': 'Rechazado'}
+                defaults={'estado': ESTADO_RECHAZADO}
             )
 
-            if not created and match.estado != 'Aceptado':
-                match.estado = 'Rechazado'
+            if not created and match.estado != ESTADO_ACEPTADO:
+                match.estado = ESTADO_RECHAZADO
                 match.save()
             
             return Response({'message': 'Match rechazado'})
@@ -297,11 +301,11 @@ class MatchViewSet(viewsets.ModelViewSet):
         result = []
         for mascota in mis_mascotas:
             likes_pendientes = Match.objects.filter(
-                mascota2=mascota, estado='Pendiente'
+                mascota2=mascota, estado=ESTADO_PENDIENTE
             ).count()
             matches_aceptados = Match.objects.filter(
                 Q(mascota1=mascota) | Q(mascota2=mascota),
-                estado='Aceptado'
+                estado=ESTADO_ACEPTADO
             ).count()
 
             foto = mascota.foto_url or ''
@@ -324,7 +328,7 @@ class MatchViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='all-matches')
     def all_matches(self, request):
         """Obtener todos los matches aceptados del usuario (todas sus mascotas)"""
-        matches = self.get_queryset().filter(estado='Aceptado')
+        matches = self.get_queryset().filter(estado=ESTADO_ACEPTADO)
         serializer = self.get_serializer(matches, many=True)
         return Response(serializer.data)
 
@@ -335,7 +339,7 @@ class MatchViewSet(viewsets.ModelViewSet):
         
         matches = Match.objects.filter(
             Q(mascota1=mascota) | Q(mascota2=mascota),
-            estado='Aceptado'
+            estado=ESTADO_ACEPTADO
         )
         
         serializer = self.get_serializer(matches, many=True)
@@ -355,13 +359,13 @@ class MatchViewSet(viewsets.ModelViewSet):
 
         total_matches = Match.objects.filter(
             Q(mascota1__dueño=user) | Q(mascota2__dueño=user),
-            estado='Aceptado'
+            estado=ESTADO_ACEPTADO
         ).count()
 
         # Chats activos = matches aceptados que tienen al menos un mensaje
         active_chats = Match.objects.filter(
             Q(mascota1__dueño=user) | Q(mascota2__dueño=user),
-            estado='Aceptado',
+            estado=ESTADO_ACEPTADO,
             mensajes__isnull=False
         ).distinct().count()
 
@@ -369,7 +373,7 @@ class MatchViewSet(viewsets.ModelViewSet):
         # (mascota1 es quien dio like, mascota2 es quien recibió)
         likes_recibidos = Match.objects.filter(
             mascota2__dueño=user,
-            estado='Pendiente'
+            estado=ESTADO_PENDIENTE
         ).count()
 
         total_mascotas = len(mis_mascotas_ids)
@@ -392,7 +396,7 @@ class MatchViewSet(viewsets.ModelViewSet):
         # Matches aceptados
         matches_recientes = Match.objects.filter(
             Q(mascota1__dueño=user) | Q(mascota2__dueño=user),
-            estado='Aceptado'
+            estado=ESTADO_ACEPTADO
         ).select_related('mascota1', 'mascota2').order_by('-fecha_match')[:limit]
 
         for match in matches_recientes:
@@ -410,7 +414,7 @@ class MatchViewSet(viewsets.ModelViewSet):
         # Likes recibidos pendientes
         likes = Match.objects.filter(
             mascota2__dueño=user,
-            estado='Pendiente'
+            estado=ESTADO_PENDIENTE
         ).select_related('mascota1').order_by('-fecha_match')[:limit]
 
         for like in likes:
