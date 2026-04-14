@@ -11,7 +11,6 @@ import os
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
-from channels.security.websocket import AllowedHostsOriginValidator
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'PawMatch.settings')
 
@@ -23,11 +22,12 @@ from chat_app import routing as chat_routing
 
 application = ProtocolTypeRouter({
     "http": django_asgi_app,
-    "websocket": AllowedHostsOriginValidator(
-        AuthMiddlewareStack(
-            URLRouter(
-                chat_routing.websocket_urlpatterns
-            )
+    # AllowedHostsOriginValidator removido: en dev causa 404 ocasionales cuando
+    # el frontend corre en un puerto diferente (ej. localhost:5173).
+    # La autenticación por token en el consumer ya protege los WebSockets.
+    "websocket": AuthMiddlewareStack(
+        URLRouter(
+            chat_routing.websocket_urlpatterns
         )
     ),
 })

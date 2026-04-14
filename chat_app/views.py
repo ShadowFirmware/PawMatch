@@ -35,35 +35,38 @@ class MensajeViewSet(viewsets.ModelViewSet):
         )
         
         conversaciones = []
+        from pets_app.serializers import MascotaSerializer
         for match in matches:
-            # Determinar la otra mascota en el match
+            # Determinar mi mascota y la otra mascota en el match
             if match.mascota1.dueño == user:
+                mi_mascota   = match.mascota1
                 otra_mascota = match.mascota2
-                otro_dueño = match.mascota2.dueño
+                otro_dueño   = match.mascota2.dueño
             else:
+                mi_mascota   = match.mascota2
                 otra_mascota = match.mascota1
-                otro_dueño = match.mascota1.dueño
-            
+                otro_dueño   = match.mascota1.dueño
+
             # Obtener el último mensaje
             ultimo_mensaje = Mensaje.objects.filter(match=match).order_by('-fecha_envío').first()
-            
+
             # Contar mensajes no leídos
             mensajes_no_leidos = Mensaje.objects.filter(
                 match=match,
                 leído=False
             ).exclude(remitente=user).count()
-            
-            from pets_app.serializers import MascotaSerializer
+
             conversaciones.append({
-                'match_id': match.match_id,
-                'otra_mascota': MascotaSerializer(otra_mascota, context={'request': request}).data,
+                'match_id':          match.match_id,
+                'mi_mascota':        MascotaSerializer(mi_mascota,   context={'request': request}).data,
+                'otra_mascota':      MascotaSerializer(otra_mascota, context={'request': request}).data,
                 'otro_dueño': {
                     'dueño_id': otro_dueño.dueño_id,
-                    'nombre': otro_dueño.nombre,
-                    'email': otro_dueño.email
+                    'nombre':   otro_dueño.nombre,
+                    'email':    otro_dueño.email,
                 },
-                'ultimo_mensaje': MensajeSerializer(ultimo_mensaje).data if ultimo_mensaje else None,
-                'mensajes_no_leidos': mensajes_no_leidos
+                'ultimo_mensaje':    MensajeSerializer(ultimo_mensaje).data if ultimo_mensaje else None,
+                'mensajes_no_leidos': mensajes_no_leidos,
             })
         
         return Response(conversaciones)
@@ -98,6 +101,27 @@ class MensajeViewSet(viewsets.ModelViewSet):
                     remitente=request.user,
                     contenido=serializer.validated_data['message']
                 )
+
+                # Broadcast al grupo WebSocket para que los receptores lo reciban en tiempo real
+                try:
+                    from channels.layers import get_channel_layer
+                    from asgiref.sync import async_to_sync
+                    channel_layer = get_channel_layer()
+                    async_to_sync(channel_layer.group_send)(
+                        f'chat_{match.match_id}',
+                        {
+                            'type': 'chat_message',
+                            'message': mensaje.contenido,
+                            'sender_id': request.user.dueño_id,
+                            'sender_name': request.user.nombre,
+                            'match_id': match.match_id,
+                            'msg_id': mensaje.msg_id,
+                            'timestamp': mensaje.fecha_envío.isoformat(),
+                        }
+                    )
+                except Exception:
+                    pass  # Si el channel layer no está disponible, la respuesta REST es suficiente
+
                 return Response(MensajeSerializer(mensaje).data, status=status.HTTP_201_CREATED)
-            
+
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

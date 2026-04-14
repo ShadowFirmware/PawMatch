@@ -145,9 +145,22 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-    # Ocultar detalles de excepciones en producción
     'EXCEPTION_HANDLER': 'PawMatch.exception_handler.custom_exception_handler',
+    # ── Rate limiting ──────────────────────────────────────────────────────────
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon':     '200/hour',   # usuarios no autenticados
+        'user':     '2000/hour',  # usuarios autenticados
+        'login':    '5/minute',   # máx 5 intentos de login por IP por minuto
+        'register': '3/minute',   # máx 3 registros por IP por minuto
+    },
 }
+
+# ── Expiración de tokens de sesión ─────────────────────────────────────────────
+TOKEN_EXPIRY_DAYS = 7   # Los tokens expiran a los 7 días de su creación
 
 # ── Autenticación ─────────────────────────────────────────────────────────────
 AUTHENTICATION_BACKENDS = [

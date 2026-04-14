@@ -373,11 +373,11 @@ class MatchViewSet(viewsets.ModelViewSet):
             mensajes__isnull=False
         ).distinct().count()
 
-        # Likes recibidos = matches Pendiente donde la otra mascota nos dio like
-        # (mascota1 es quien dio like, mascota2 es quien recibió)
+        # Likes recibidos = mascota2 siempre es quien recibió el like,
+        # independientemente de si sigue pendiente o ya se convirtió en match.
         likes_recibidos = Match.objects.filter(
             mascota2__dueño=user,
-            estado=ESTADO_PENDIENTE
+            estado__in=[ESTADO_PENDIENTE, ESTADO_ACEPTADO]
         ).count()
 
         total_mascotas = len(mis_mascotas_ids)

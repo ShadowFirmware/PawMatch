@@ -1,6 +1,6 @@
 import logging
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.decorators import api_view, permission_classes, action, throttle_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
@@ -8,6 +8,7 @@ from django.contrib.auth import authenticate
 from .models import Dueño
 from .serializers import DueñoSerializer, LoginSerializer, PerfilSerializer, GoogleAuthSerializer, FacebookAuthSerializer
 from .audit import log_event
+from .throttles import LoginRateThrottle, RegisterRateThrottle
 
 logger = logging.getLogger('pawmatch.errors')
 
@@ -90,20 +91,36 @@ class PerfilViewSet(viewsets.ViewSet):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([LoginRateThrottle])
 def login_view(request):
     serializer = LoginSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         user = serializer.validated_data['user']
-        token, _ = Token.objects.get_or_create(user=user)
+        # Rotar token en cada login: eliminar el antiguo y crear uno nuevo
+        Token.objects.filter(user=user).delete()
+        token = Token.objects.create(user=user)
         log_event('login_ok', request=request, usuario=user)
         return Response({'token': token.key, 'user': DueñoSerializer(user).data})
-    # Login fallido
-    log_event('login_fallo', request=request, detalles={'email': request.data.get('email', '')})
+    # Login fallido — no registrar el email para evitar enumeración de usuarios
+    log_event('login_fallo', request=request)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout_view(request):
+    """Invalida el token del usuario en el servidor."""
+    try:
+        Token.objects.filter(user=request.user).delete()
+        log_event('logout', request=request, usuario=request.user)
+        return Response({'message': 'Sesión cerrada correctamente.'})
+    except Exception:
+        return Response({'error': 'Error al cerrar sesión.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([RegisterRateThrottle])
 def register_view(request):
     try:
         serializer = DueñoSerializer(data=request.data)
