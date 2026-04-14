@@ -87,7 +87,7 @@ def calcular_compatibilidad_ubicacion(dueño1_ubicacion, dueño2_ubicacion, dist
         else:
             # Entre 10 y 15km, escala de 0.3 a 0
             return 0.3 - ((distancia - 10) / 5) * 0.3
-    except:
+    except (ValueError, AttributeError, TypeError):
         return 0
 
 
@@ -100,6 +100,49 @@ class MatchViewSet(viewsets.ModelViewSet):
         return Match.objects.filter(
             Q(mascota1__dueño=user) | Q(mascota2__dueño=user)
         )
+
+    def _aplicar_filtros_preferencia(self, queryset, preferencia):
+        """Aplica filtros de preferencia al queryset de mascotas."""
+        if preferencia.especie_pref:
+            especies = [e.strip() for e in preferencia.especie_pref.split(',')]
+            queryset = queryset.filter(especie__in=especies)
+        
+        if preferencia.edad_pref_min is not None:
+            queryset = queryset.filter(edad__gte=preferencia.edad_pref_min)
+        if preferencia.edad_pref_max is not None:
+            queryset = queryset.filter(edad__lte=preferencia.edad_pref_max)
+        
+        if preferencia.género_pref != 'Indistinto':
+            queryset = queryset.filter(género=preferencia.género_pref)
+        
+        return queryset
+
+    def _calcular_distancia_entre_mascotas(self, mascota1, mascota2):
+        """Calcula la distancia entre dos mascotas basándose en la ubicación de sus dueños."""
+        try:
+            ub1 = mascota1.dueño.ubicación.strip()
+            ub2 = mascota2.dueño.ubicación.strip()
+            
+            if ub1 in ('0,0', '0.0,0.0', '') or ub2 in ('0,0', '0.0,0.0', ''):
+                return None
+            
+            lat1, lon1 = map(float, ub1.split(','))
+            lat2, lon2 = map(float, ub2.split(','))
+            return calcular_distancia(lat1, lon1, lat2, lon2)
+        except (ValueError, AttributeError, TypeError):
+            return None
+
+    def _debe_omitir_mascota(self, mascota, otra_mascota):
+        """Verifica si una mascota debe omitirse (ya interactuó o tiene match)."""
+        ya_actue = Match.objects.filter(
+            mascota1=mascota, mascota2=otra_mascota
+        ).exists()
+        ya_aceptado = Match.objects.filter(
+            Q(mascota1=mascota, mascota2=otra_mascota) |
+            Q(mascota1=otra_mascota, mascota2=mascota),
+            estado=ESTADO_ACEPTADO
+        ).exists()
+        return ya_actue or ya_aceptado
 
     @action(detail=False, methods=['get'], url_path='potential/(?P<pet_id>[^/.]+)')
     def potential_matches(self, request, pet_id=None):
@@ -118,33 +161,12 @@ class MatchViewSet(viewsets.ModelViewSet):
         
         # Filtrar por preferencias si existen
         if 'preferencia' in locals():
-            if preferencia.especie_pref:
-                especies = [e.strip() for e in preferencia.especie_pref.split(',')]
-                otras_mascotas = otras_mascotas.filter(especie__in=especies)
-            
-            if preferencia.edad_pref_min is not None:
-                otras_mascotas = otras_mascotas.filter(edad__gte=preferencia.edad_pref_min)
-            if preferencia.edad_pref_max is not None:
-                otras_mascotas = otras_mascotas.filter(edad__lte=preferencia.edad_pref_max)
-            
-            if preferencia.género_pref != 'Indistinto':
-                otras_mascotas = otras_mascotas.filter(género=preferencia.género_pref)
+            otras_mascotas = self._aplicar_filtros_preferencia(otras_mascotas, preferencia)
         
         # Calcular compatibilidad para cada mascota
         matches_potenciales = []
         for otra_mascota in otras_mascotas:
-            # Saltar si ya interactué con esta mascota (yo di like/pass)
-            # o si ya hay un match aceptado en cualquier dirección
-            ya_actue = Match.objects.filter(
-                mascota1=mascota, mascota2=otra_mascota
-            ).exists()
-            ya_aceptado = Match.objects.filter(
-                Q(mascota1=mascota, mascota2=otra_mascota) |
-                Q(mascota1=otra_mascota, mascota2=mascota),
-                estado=ESTADO_ACEPTADO
-            ).exists()
-
-            if ya_actue or ya_aceptado:
+            if self._debe_omitir_mascota(mascota, otra_mascota):
                 continue
 
             # ¿Esta mascota ya me dio like? → mostrarla primero con badge
@@ -159,36 +181,18 @@ class MatchViewSet(viewsets.ModelViewSet):
                 otra_mascota.dueño.ubicación,
                 distancia_max
             )
-
             score_total = compat_caracteristicas + compat_ubicacion
 
-            # Solo incluir si está dentro del rango de distancia
-            # Si alguno tiene '0,0' (sin ubicación configurada), incluir igualmente
-            try:
-                ub1 = mascota.dueño.ubicación.strip()
-                ub2 = otra_mascota.dueño.ubicación.strip()
-                sin_ubicacion = ub1 in ('0,0', '0.0,0.0', '') or ub2 in ('0,0', '0.0,0.0', '')
-
-                if sin_ubicacion:
-                    matches_potenciales.append({
-                        'mascota': otra_mascota,
-                        'score': score_total,
-                        'distancia': None,
-                        'liked_me': liked_me,
-                    })
-                else:
-                    lat1, lon1 = map(float, ub1.split(','))
-                    lat2, lon2 = map(float, ub2.split(','))
-                    distancia = calcular_distancia(lat1, lon1, lat2, lon2)
-                    if distancia <= distancia_max:
-                        matches_potenciales.append({
-                            'mascota': otra_mascota,
-                            'score': score_total,
-                            'distancia': round(distancia, 2),
-                            'liked_me': liked_me,
-                        })
-            except Exception:
-                continue
+            # Calcular distancia y filtrar por rango
+            distancia = self._calcular_distancia_entre_mascotas(mascota, otra_mascota)
+            
+            if distancia is None or distancia <= distancia_max:
+                matches_potenciales.append({
+                    'mascota': otra_mascota,
+                    'score': score_total,
+                    'distancia': round(distancia, 2) if distancia else None,
+                    'liked_me': liked_me,
+                })
 
         # Ordenar: primero los que ya dieron like, luego por score descendente
         matches_potenciales.sort(key=lambda x: (not x['liked_me'], -x['score']))

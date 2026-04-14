@@ -86,6 +86,13 @@ class MascotaSerializer(serializers.ModelSerializer):
             'foto_url': {'required': False},
         }
 
+    def _extract_characteristics(self, data):
+        """Extrae características del request data, manejando QueryDict y listas."""
+        if hasattr(data, 'getlist'):
+            return data.getlist('characteristics')
+        raw = data.get('characteristics', [])
+        return raw if isinstance(raw, list) else [raw] if raw else []
+
     def to_internal_value(self, data):
         """
         Mapea los nombres de campos del frontend a los del modelo backend.
@@ -118,13 +125,7 @@ class MascotaSerializer(serializers.ModelSerializer):
 
         # Manejar characteristics (array) → descripción (string)
         if 'characteristics' in data and DESCRIPCION_FIELD not in normalized:
-            if hasattr(data, 'getlist'):
-                # QueryDict (multipart/form-data): puede tener múltiples valores
-                chars = data.getlist('characteristics')
-            else:
-                raw = data.get('characteristics', [])
-                chars = raw if isinstance(raw, list) else [raw] if raw else []
-
+            chars = self._extract_characteristics(data)
             if chars:
                 normalized[DESCRIPCION_FIELD] = ', '.join(str(c) for c in chars if c)
 

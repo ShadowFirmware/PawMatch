@@ -14,10 +14,10 @@ class Mascota(models.Model):
     dueño = models.ForeignKey(Dueño, on_delete=models.CASCADE, related_name='mascotas')
     nombre = models.CharField(max_length=100)
     especie = models.CharField(max_length=50)
-    raza = models.CharField(max_length=50, blank=True, null=True)
+    raza = models.CharField(max_length=50, blank=True, default='')
     edad = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(30)])
     género = models.CharField(max_length=10, choices=GENERO_CHOICES, blank=True, default='Otro')
-    descripción = models.TextField(blank=True, null=True)
+    descripción = models.TextField(blank=True, default='')
     foto_url = models.CharField(max_length=255, blank=True, default='')
 
     class Meta:
