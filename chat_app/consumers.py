@@ -142,13 +142,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_user_from_token(self, token_key):
+        from auth_app.models import TokenActividad
         try:
             token = Token.objects.select_related('user').get(key=token_key)
-            # Verificar expiración del token (misma lógica que BearerTokenAuthentication)
+
+            now = timezone.now()
             expiry_days = getattr(settings, 'TOKEN_EXPIRY_DAYS', 7)
-            if timezone.now() > token.created + timedelta(days=expiry_days):
+            inactivity_minutes = getattr(settings, 'INACTIVITY_TIMEOUT_MINUTES', 5)
+
+            # Verificar expiración absoluta
+            if now > token.created + timedelta(days=expiry_days):
                 token.delete()
                 return None
+
+            # Verificar cierre por inactividad
+            actividad, creada = TokenActividad.objects.get_or_create(token=token)
+            if not creada:
+                limite = now - timedelta(minutes=inactivity_minutes)
+                if actividad.ultima_actividad < limite:
+                    token.delete()
+                    return None
+
+            # Actualizar actividad al conectarse por WS
+            TokenActividad.objects.filter(token=token).update(ultima_actividad=now)
+
             return token.user
         except Token.DoesNotExist:
             return None

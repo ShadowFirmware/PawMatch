@@ -7,6 +7,16 @@ ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/gif', 'image/webp'}
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
 MAX_PHOTO_SIZE = 5 * 1024 * 1024  # 5 MB
 
+# Firmas de bytes mágicos de cada formato de imagen soportado.
+# Detectan el tipo real del archivo independientemente del nombre/MIME declarado.
+_MAGIC_SIGNATURES = [
+    (b'\xff\xd8\xff', 'JPEG'),
+    (b'\x89PNG\r\n\x1a\n', 'PNG'),
+    (b'GIF87a', 'GIF'),
+    (b'GIF89a', 'GIF'),
+    # WEBP: cabecera RIFF????WEBP (bytes 0-3 y 8-11)
+]
+
 DUENO_FIELD = 'dueño'
 GENERO_FIELD = 'género'
 DESCRIPCION_FIELD = 'descripción'
@@ -19,8 +29,29 @@ def sanitize_filename(name):
     return name or 'foto'
 
 
+def _check_magic_bytes(photo):
+    """
+    Lee los primeros 12 bytes del archivo y verifica que correspondan a una
+    imagen válida. Previene que archivos maliciosos renombrados pasen la
+    validación solo por extensión o Content-Type declarado por el cliente.
+    """
+    header = photo.read(12)
+    photo.seek(0)
+
+    # Verificar firmas estándar (JPEG, PNG, GIF)
+    for magic, _ in _MAGIC_SIGNATURES:
+        if header.startswith(magic):
+            return True
+
+    # Verificar WEBP: bytes 0-3 = 'RIFF', bytes 8-11 = 'WEBP'
+    if header[:4] == b'RIFF' and header[8:12] == b'WEBP':
+        return True
+
+    return False
+
+
 def validate_photo(photo):
-    """Valida tipo y tamaño de un archivo de foto. Lanza ValidationError si no pasa."""
+    """Valida tipo real (magic bytes), extensión, MIME y tamaño de una foto."""
     import os
     ext = os.path.splitext(photo.name)[1].lower()
     if ext not in ALLOWED_IMAGE_EXTENSIONS:
@@ -36,6 +67,11 @@ def validate_photo(photo):
         mb = photo.size / (1024 * 1024)
         raise serializers.ValidationError(
             f'La imagen es demasiado grande ({mb:.1f} MB). Máximo permitido: 5 MB.'
+        )
+    # Verificar firma real del archivo (magic bytes)
+    if not _check_magic_bytes(photo):
+        raise serializers.ValidationError(
+            'El archivo no es una imagen válida.'
         )
 
 

@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from .models import Mascota, FotoMascota, Preferencia
 from .serializers import MascotaSerializer, FotoMascotaSerializer, PreferenciaSerializer
 from auth_app.models import Dueño
+from auth_app.audit import log_event
 
 
 class MascotaViewSet(viewsets.ModelViewSet):
@@ -17,7 +18,22 @@ class MascotaViewSet(viewsets.ModelViewSet):
         return Mascota.objects.filter(dueño=user)
 
     def perform_create(self, serializer):
-        serializer.save(dueño=self.request.user)
+        mascota = serializer.save(dueño=self.request.user)
+        log_event(
+            'mascota_creada',
+            request=self.request,
+            usuario=self.request.user,
+            detalles={'mascota_id': mascota.mascota_id, 'nombre': mascota.nombre},
+        )
+
+    def perform_destroy(self, instance):
+        log_event(
+            'mascota_eliminada',
+            request=self.request,
+            usuario=self.request.user,
+            detalles={'mascota_id': instance.mascota_id, 'nombre': instance.nombre},
+        )
+        instance.delete()
 
     @action(detail=False, methods=['get'], url_path='my-pets')
     def my_pets(self, request):

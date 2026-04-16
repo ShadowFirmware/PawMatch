@@ -48,7 +48,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'PawMatch.middleware.SecurityHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,24 +80,38 @@ TEMPLATES = [
 WSGI_APPLICATION = 'PawMatch.wsgi.application'
 ASGI_APPLICATION = 'PawMatch.asgi.application'
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-    },
-}
+_redis_url = os.environ.get('REDIS_URL', '')
+if _redis_url:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {'hosts': [_redis_url]},
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
 
 # ── Base de datos ─────────────────────────────────────────────────────────────
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get('DATABASE_NAME', 'PawMatch'),
-        'USER': os.environ.get('DATABASE_USER', 'root'),
+        'USER': os.environ.get('DATABASE_USER', 'luis'),
         'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
         'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
         'PORT': os.environ.get('DATABASE_PORT', '3306'),
         'OPTIONS': {
             'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            **({
+                'ssl': {
+                    'ca': os.environ.get('MYSQL_SSL_CA'),
+                },
+            } if os.environ.get('MYSQL_SSL_CA') else {}),
         },
     }
 }
@@ -115,7 +131,9 @@ USE_I18N = True
 USE_TZ = True
 
 # ── Archivos estáticos y media ────────────────────────────────────────────────
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -156,11 +174,13 @@ REST_FRAMEWORK = {
         'user':     '2000/hour',  # usuarios autenticados
         'login':    '5/minute',   # máx 5 intentos de login por IP por minuto
         'register': '3/minute',   # máx 3 registros por IP por minuto
+        'reporte':  '10/hour',    # máx 10 reportes por hora por usuario
     },
 }
 
 # ── Expiración de tokens de sesión ─────────────────────────────────────────────
-TOKEN_EXPIRY_DAYS = 7   # Los tokens expiran a los 7 días de su creación
+TOKEN_EXPIRY_DAYS = 7          # Expiración absoluta: 7 días desde la creación
+INACTIVITY_TIMEOUT_MINUTES = 5 # Cierre por inactividad: 5 minutos sin actividad
 
 # ── Autenticación ─────────────────────────────────────────────────────────────
 AUTHENTICATION_BACKENDS = [
@@ -175,6 +195,21 @@ GOOGLE_OAUTH2_CLIENT_SECRET = os.environ.get('GOOGLE_OAUTH2_CLIENT_SECRET', '')
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
+
+# En producción (DEBUG=False) activar cookies seguras y HTTPS
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Strict'
+
+# HSTS y redirección HTTPS — activar solo cuando el dominio tenga certificado SSL
+# Establecer HTTPS_ENABLED=true en .env una vez que Certbot esté configurado
+if not DEBUG and os.environ.get('HTTPS_ENABLED', 'False').lower() in ('true', '1', 'yes'):
+    SECURE_HSTS_SECONDS = 31536000       # 1 año
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = True
 
 # ── Bitácora (logging) ────────────────────────────────────────────────────────
 LOGS_DIR = BASE_DIR / 'logs'

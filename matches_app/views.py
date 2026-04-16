@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import throttle_classes
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 import math
@@ -11,6 +12,8 @@ from .serializers import (
 )
 from pets_app.models import Mascota, Preferencia
 from auth_app.models import Dueño
+from auth_app.audit import log_event
+from auth_app.throttles import ReporteRateThrottle
 
 ESTADO_ACEPTADO = 'Aceptado'
 ESTADO_PENDIENTE = 'Pendiente'
@@ -246,6 +249,12 @@ class MatchViewSet(viewsets.ModelViewSet):
             like_previo.save()
             # Limpiar duplicado inverso si existiera (datos viejos)
             Match.objects.filter(mascota1=mascota1, mascota2=mascota2).delete()
+            log_event(
+                'match_formado',
+                request=request,
+                usuario=request.user,
+                detalles={'match_id': like_previo.match_id, 'mascota1': mascota1.mascota_id, 'mascota2': mascota2.mascota_id},
+            )
             return Response({'match': MatchSerializer(like_previo).data, 'es_match': True})
 
         # ¿Ya di like yo antes? Reusar el registro (no crear duplicado)
@@ -258,6 +267,12 @@ class MatchViewSet(viewsets.ModelViewSet):
             mascota1=mascota1,
             mascota2=mascota2,
             estado='Pendiente'
+        )
+        log_event(
+            'like_enviado',
+            request=request,
+            usuario=request.user,
+            detalles={'match_id': match.match_id, 'mascota_origen': mascota1.mascota_id, 'mascota_destino': mascota2.mascota_id},
         )
         return Response({'match': MatchSerializer(match).data, 'es_match': False})
 
@@ -468,6 +483,11 @@ class MatchViewSet(viewsets.ModelViewSet):
 class ReporteViewSet(viewsets.ModelViewSet):
     serializer_class = ReporteSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_throttles(self):
+        if self.action == 'create':
+            return [ReporteRateThrottle()]
+        return super().get_throttles()
 
     def get_queryset(self):
         return Reporte.objects.filter(dueño=self.request.user)

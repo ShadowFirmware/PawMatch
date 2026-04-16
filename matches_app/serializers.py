@@ -13,7 +13,9 @@ class MatchSerializer(serializers.ModelSerializer):
             'match_id', 'mascota1', 'mascota2', 'mascota1_data',
             'mascota2_data', 'fecha_match', 'estado'
         ]
-        read_only_fields = ['match_id', 'fecha_match']
+        # 'estado' es read_only: la transición de estado solo puede ocurrir
+        # a través de los endpoints /like/ y /pass/, nunca via POST/PUT directo.
+        read_only_fields = ['match_id', 'fecha_match', 'estado']
 
 
 class LikeMatchSerializer(serializers.Serializer):
@@ -30,4 +32,5 @@ class ReporteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reporte
         fields = ['report_id', 'dueño', 'mascota', 'motivo', 'fecha_reporte']
-        read_only_fields = ['report_id', 'fecha_reporte']
+        # 'dueño' es read_only: se asigna en perform_create con request.user
+        read_only_fields = ['report_id', 'dueño', 'fecha_reporte']

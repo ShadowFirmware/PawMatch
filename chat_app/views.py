@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from .models import Mensaje
 from .serializers import MensajeSerializer, SendMessageSerializer
 from matches_app.models import Match
+from auth_app.audit import log_event
 
 
 class MensajeViewSet(viewsets.ModelViewSet):
@@ -122,6 +123,12 @@ class MensajeViewSet(viewsets.ModelViewSet):
                 except Exception:
                     pass  # Si el channel layer no está disponible, la respuesta REST es suficiente
 
+                log_event(
+                    'mensaje_enviado',
+                    request=request,
+                    usuario=request.user,
+                    detalles={'match_id': match.match_id, 'msg_id': mensaje.msg_id},
+                )
                 return Response(MensajeSerializer(mensaje).data, status=status.HTTP_201_CREATED)
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

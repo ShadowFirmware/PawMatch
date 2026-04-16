@@ -95,6 +95,26 @@ class Perfil:
     pass
 
 
+class TokenActividad(models.Model):
+    """
+    Registra la última vez que un token fue usado en un request autenticado.
+    Permite cerrar sesión por inactividad independientemente de la expiración absoluta.
+    """
+    token = models.OneToOneField(
+        'authtoken.Token',
+        on_delete=models.CASCADE,
+        related_name='actividad',
+        primary_key=True,
+    )
+    ultima_actividad = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'token_actividad'
+
+    def __str__(self):
+        return f"Actividad token de {self.token.user} — {self.ultima_actividad}"
+
+
 class BitacoraEvento(models.Model):
     """Bitácora de eventos de seguridad y acciones relevantes."""
 
