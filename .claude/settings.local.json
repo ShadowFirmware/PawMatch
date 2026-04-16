@@ -28,7 +28,19 @@
       "Bash(python3 manage.py makemigrations auth_app)",
       "Bash(ls c:/Users/luisp/AppData/Local/Programs/Python/Python*/python.exe)",
       "Bash(\"c:/Users/luisp/AppData/Local/Programs/Python/Python313/python.exe\" manage.py makemigrations auth_app)",
-      "Bash(\"c:/Users/luisp/AppData/Local/Programs/Python/Python313/python.exe\" manage.py migrate auth_app)"
+      "Bash(\"c:/Users/luisp/AppData/Local/Programs/Python/Python313/python.exe\" manage.py migrate auth_app)",
+      "Bash(cat c:/Users/luisp/PawMatch/logs/*.log)",
+      "Bash(python manage.py shell -c ':*)",
+      "Bash(python3 manage.py shell -c ':*)",
+      "Bash(\"c:/Users/luisp/AppData/Local/Programs/Python/Python313/python.exe\" -c \"print\\('ok'\\)\")",
+      "Bash(c:/Users/luisp/AppData/Local/Programs/Python/Python313/python.exe manage.py shell -c ':*)",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\nBYTES:%{size_download}\\\\n\" -X POST http://localhost:8000/api/auth/register/ -H \"Content-Type: application/json\" -d '{\"nombre\":\"Test User\",\"email\":\"testuser999@ejemplo.com\",\"password\":\"password123\",\"ubicaci\\\\u00f3n\":\"0,0\"}')",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\nBYTES:%{size_download}\\\\n\" -X POST http://localhost:8000/api/auth/register/ -H \"Content-Type: application/json\" -d '{\"nombre\":\"Test2\",\"email\":\"test2abc@ejemplo.com\",\"password\":\"password123\",\"ubicacion\":\"0,0\"}')",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\nBYTES:%{size_download}\\\\n\" -X POST http://localhost:8000/api/auth/register/ -H \"Content-Type: application/json\" -d '{\"nombre\":\"Test\",\"email\":\"pabovanne@gmail.com\",\"password\":\"password123\",\"ubicaci\\\\u00f3n\":\"0,0\"}')",
+      "Bash(git pull:*)",
+      "Bash(python manage.py check)",
+      "Bash(py --version)",
+      "Bash(python3.12 --version)"
     ]
   }
 }

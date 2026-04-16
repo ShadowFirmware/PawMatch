@@ -48,7 +48,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'PawMatch.middleware.SecurityHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -80,60 +79,32 @@ TEMPLATES = [
 WSGI_APPLICATION = 'PawMatch.wsgi.application'
 ASGI_APPLICATION = 'PawMatch.asgi.application'
 
-_redis_url = os.environ.get('REDIS_URL', '')
-if _redis_url:
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {'hosts': [_redis_url]},
-        },
-    }
-else:
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels.layers.InMemoryChannelLayer',
-        },
-    }
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 # ── Base de datos ─────────────────────────────────────────────────────────────
-# Railway MySQL plugin genera DATABASE_URL automáticamente.
-# En desarrollo local se usan las variables DATABASE_* del .env.
-_database_url = os.environ.get('DATABASE_URL', '')
-if _database_url:
-    from urllib.parse import urlparse as _urlparse
-    _db = _urlparse(_database_url)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': _db.path.lstrip('/'),
-            'USER': _db.username,
-            'PASSWORD': _db.password,
-            'HOST': _db.hostname,
-            'PORT': str(_db.port or 3306),
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.environ.get('DATABASE_NAME', 'PawMatch'),
+        'USER': os.environ.get('DATABASE_USER', 'luis'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
+        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
+        'PORT': os.environ.get('DATABASE_PORT', '3306'),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            **({
+                'ssl': {
+                    'ca': os.environ.get('MYSQL_SSL_CA'),
+                },
+            } if os.environ.get('MYSQL_SSL_CA') else {}),
+        },
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.environ.get('DATABASE_NAME', 'PawMatch'),
-            'USER': os.environ.get('DATABASE_USER', 'root'),
-            'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
-            'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
-            'PORT': os.environ.get('DATABASE_PORT', '3306'),
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-                **({
-                    'ssl': {'ca': os.environ.get('MYSQL_SSL_CA')},
-                } if os.environ.get('MYSQL_SSL_CA') else {}),
-            },
-        }
-    }
+}
 
 # ── Validación de contraseñas ─────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
@@ -150,9 +121,7 @@ USE_I18N = True
 USE_TZ = True
 
 # ── Archivos estáticos y media ────────────────────────────────────────────────
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -222,9 +191,8 @@ SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Strict'
 
-# HSTS y redirección HTTPS — activar solo cuando el dominio tenga certificado SSL
-# Establecer HTTPS_ENABLED=true en .env una vez que Certbot esté configurado
-if not DEBUG and os.environ.get('HTTPS_ENABLED', 'False').lower() in ('true', '1', 'yes'):
+# HSTS solo en producción con HTTPS
+if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000       # 1 año
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
