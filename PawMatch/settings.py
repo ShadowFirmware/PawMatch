@@ -96,25 +96,44 @@ else:
     }
 
 # ── Base de datos ─────────────────────────────────────────────────────────────
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DATABASE_NAME', 'PawMatch'),
-        'USER': os.environ.get('DATABASE_USER', 'luis'),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
-        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
-        'PORT': os.environ.get('DATABASE_PORT', '3306'),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            **({
-                'ssl': {
-                    'ca': os.environ.get('MYSQL_SSL_CA'),
-                },
-            } if os.environ.get('MYSQL_SSL_CA') else {}),
-        },
+# Railway MySQL plugin genera DATABASE_URL automáticamente.
+# En desarrollo local se usan las variables DATABASE_* del .env.
+_database_url = os.environ.get('DATABASE_URL', '')
+if _database_url:
+    from urllib.parse import urlparse as _urlparse
+    _db = _urlparse(_database_url)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': _db.path.lstrip('/'),
+            'USER': _db.username,
+            'PASSWORD': _db.password,
+            'HOST': _db.hostname,
+            'PORT': str(_db.port or 3306),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('DATABASE_NAME', 'PawMatch'),
+            'USER': os.environ.get('DATABASE_USER', 'root'),
+            'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
+            'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
+            'PORT': os.environ.get('DATABASE_PORT', '3306'),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                **({
+                    'ssl': {'ca': os.environ.get('MYSQL_SSL_CA')},
+                } if os.environ.get('MYSQL_SSL_CA') else {}),
+            },
+        }
+    }
 
 # ── Validación de contraseñas ─────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [

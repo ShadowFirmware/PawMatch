@@ -25,5 +25,5 @@ python manage.py migrate --noinput
 echo "📁 Recolectando archivos estáticos..."
 python manage.py collectstatic --noinput --clear
 
-echo "🚀 Iniciando Daphne (ASGI)..."
-exec daphne -b 0.0.0.0 -p 8000 PawMatch.asgi:application
+echo "🚀 Iniciando Daphne (ASGI) en puerto ${PORT:-8000}..."
+exec daphne -b 0.0.0.0 -p "${PORT:-8000}" PawMatch.asgi:application
