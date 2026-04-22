@@ -37,7 +37,22 @@ class DueñoViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['put', 'patch'], permission_classes=[IsAuthenticated], url_path='actualizar_perfil')
     def actualizar_perfil(self, request):
         try:
-            serializer = PerfilSerializer(data=request.data, partial=True)
+            data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+
+            # Manejar foto de perfil como archivo multipart
+            if 'photo' in request.FILES:
+                from django.core.files.storage import default_storage
+                import os
+                photo_file = request.FILES['photo']
+                ext = os.path.splitext(photo_file.name)[1].lower() or '.jpg'
+                filename = f"perfiles/perfil_{request.user.pk}{ext}"
+                path = default_storage.save(filename, photo_file)
+                data['foto_perfil'] = f'/media/{path}'
+            # Si foto_perfil viene como base64 ignorarla — excede max_length del campo
+            elif 'foto_perfil' in data and isinstance(data.get('foto_perfil', ''), str) and data['foto_perfil'].startswith('data:'):
+                del data['foto_perfil']
+
+            serializer = PerfilSerializer(data=data, partial=True)
             if serializer.is_valid():
                 dueno = request.user
                 for field, value in serializer.validated_data.items():

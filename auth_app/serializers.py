@@ -8,17 +8,17 @@ UBICACION_FIELD = 'ubicación'
 
 class PerfilSerializer(serializers.Serializer):
     """Serializer para los campos de perfil que están en Dueño"""
-    nombre = serializers.CharField(required=False, allow_null=True)
+    nombre = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     email = serializers.EmailField(required=False, allow_null=True)
-    ubicación = serializers.CharField(required=False, allow_null=True)
-    foto_perfil = serializers.CharField(required=False, allow_null=True)
-    telefono = serializers.CharField(required=False, allow_null=True)
-    biografia = serializers.CharField(required=False, allow_null=True)
+    ubicación = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    foto_perfil = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    telefono = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    biografia = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     fecha_nacimiento = serializers.DateField(required=False, allow_null=True)
-    genero = serializers.CharField(required=False, allow_null=True)
-    ciudad = serializers.CharField(required=False, allow_null=True)
-    estado = serializers.CharField(required=False, allow_null=True)
-    pais = serializers.CharField(required=False, allow_null=True)
+    genero = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    ciudad = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    estado = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    pais = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     mostrar_telefono = serializers.BooleanField(required=False, default=False)
     mostrar_email = serializers.BooleanField(required=False, default=False)
 
