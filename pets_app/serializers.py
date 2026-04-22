@@ -115,14 +115,13 @@ class MascotaSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['mascota_id', DUENO_FIELD]
         extra_kwargs = {
-            'nombre':    {'required': False},
-            'especie':   {'required': False},
-            'raza':      {'required': False, 'allow_blank': True},
-            'edad':      {'required': False},
-            GENERO_FIELD: {'required': False, 'max_length': 20},
-            DESCRIPCION_FIELD: {'required': False, 'allow_blank': True, 'max_length': 500},
-            'foto_url':  {'required': False},
-            UBICACION_FIELD: {'required': False, 'allow_blank': True, 'max_length': 255},
+            'nombre': {'required': False},
+            'especie': {'required': False},
+            'raza': {'required': False},
+            'edad': {'required': False},
+            GENERO_FIELD: {'required': False},
+            'foto_url': {'required': False},
+            UBICACION_FIELD: {'required': False, 'allow_blank': True},
         }
 
     def _extract_characteristics(self, data):

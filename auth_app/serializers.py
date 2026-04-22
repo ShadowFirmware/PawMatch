@@ -1,11 +1,11 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import Dueño, Perfil
+from datetime import date
 import re
 import requests
 
 UBICACION_FIELD = 'ubicación'
-from datetime import date
 
 NOMBRE_REGEX = re.compile(r"^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s'\-]+$")
 
