@@ -1,9 +1,17 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import Dueño, Perfil
+import re
 import requests
 
 UBICACION_FIELD = 'ubicación'
+NOMBRE_REGEX = re.compile(r"^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s'\-]+$")
+
+
+def validate_nombre_solo_letras(value):
+    if value and not NOMBRE_REGEX.match(value.strip()):
+        raise serializers.ValidationError('El nombre solo puede contener letras, espacios y guiones.')
+    return value
 
 
 class PerfilSerializer(serializers.Serializer):
@@ -21,6 +29,9 @@ class PerfilSerializer(serializers.Serializer):
     pais       = serializers.CharField(required=False, allow_null=True, allow_blank=True, max_length=100)
     mostrar_telefono = serializers.BooleanField(required=False, default=False)
     mostrar_email    = serializers.BooleanField(required=False, default=False)
+
+    def validate_nombre(self, value):
+        return validate_nombre_solo_letras(value)
 
 
 class DueñoSerializer(serializers.ModelSerializer):
@@ -53,6 +64,9 @@ class DueñoSerializer(serializers.ModelSerializer):
             'pais': {'required': False, 'allow_null': True},
         }
     
+    def validate_nombre(self, value):
+        return validate_nombre_solo_letras(value)
+
     def get_perfil(self, obj):
         """Retorna los campos de perfil como un objeto anidado"""
         return {
