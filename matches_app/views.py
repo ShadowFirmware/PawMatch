@@ -69,27 +69,25 @@ def calcular_compatibilidad_caracteristicas(mascota1, mascota2):
     return (score / max_score) * 0.5  # 50% del peso total
 
 
-def calcular_compatibilidad_ubicacion(dueño1_ubicacion, dueño2_ubicacion, distancia_max=15):
+def calcular_compatibilidad_ubicacion(dueño1_ubicacion, dueño2_ubicacion, distancia_max=50):
     """Calcula la compatibilidad basada en ubicación (50% del peso)"""
     try:
         lat1, lon1 = map(float, dueño1_ubicacion.split(','))
         lat2, lon2 = map(float, dueño2_ubicacion.split(','))
-        
+
         distancia = calcular_distancia(lat1, lon1, lat2, lon2)
-        
+
         # Si está fuera del rango máximo, retornar 0
         if distancia > distancia_max:
             return 0
-        
-        # Normalizar: distancia ideal es hasta 10km, máximo 15km
+
+        # Normalizar: ≤1km máximo, 1-30km escala media, 30-50km escala baja
         if distancia <= 1:
-            return 0.5  # Muy cerca
-        elif distancia <= 10:
-            # Escala lineal de 0.5 a 0.3
-            return 0.5 - ((distancia - 1) / 9) * 0.2
+            return 0.5
+        elif distancia <= 30:
+            return 0.5 - ((distancia - 1) / 29) * 0.2
         else:
-            # Entre 10 y 15km, escala de 0.3 a 0
-            return 0.3 - ((distancia - 10) / 5) * 0.3
+            return 0.3 - ((distancia - 30) / 20) * 0.3
     except (ValueError, AttributeError, TypeError):
         return 0
 
@@ -157,7 +155,7 @@ class MatchViewSet(viewsets.ModelViewSet):
             preferencia = Preferencia.objects.get(dueño=request.user)
             distancia_max = preferencia.distancia_max
         except Preferencia.DoesNotExist:
-            distancia_max = 10  # Default
+            distancia_max = 50  # Default temporal
         
         # Obtener todas las mascotas excepto las del usuario actual
         otras_mascotas = Mascota.objects.exclude(dueño=request.user).exclude(pk=pet_id)
