@@ -1,12 +1,22 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import Dueño, Perfil
-from datetime import date
 import re
 import requests
 
 UBICACION_FIELD = 'ubicación'
+from datetime import date
+
 NOMBRE_REGEX = re.compile(r"^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s'\-]+$")
+
+
+def validate_edad_minima(value):
+    if value:
+        today = date.today()
+        age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
+        if age < 18:
+            raise serializers.ValidationError('Debes tener al menos 18 años para registrarte.')
+    return value
 
 
 def validate_nombre_solo_letras(value):
@@ -35,12 +45,7 @@ class PerfilSerializer(serializers.Serializer):
         return validate_nombre_solo_letras(value)
 
     def validate_fecha_nacimiento(self, value):
-        if value:
-            hoy = date.today()
-            edad = hoy.year - value.year - ((hoy.month, hoy.day) < (value.month, value.day))
-            if edad < 18:
-                raise serializers.ValidationError('Debes tener al menos 18 años para registrarte.')
-        return value
+        return validate_edad_minima(value)
 
 
 class DueñoSerializer(serializers.ModelSerializer):
@@ -77,12 +82,7 @@ class DueñoSerializer(serializers.ModelSerializer):
         return validate_nombre_solo_letras(value)
 
     def validate_fecha_nacimiento(self, value):
-        if value:
-            hoy = date.today()
-            edad = hoy.year - value.year - ((hoy.month, hoy.day) < (value.month, value.day))
-            if edad < 18:
-                raise serializers.ValidationError('Debes tener al menos 18 años para registrarte.')
-        return value
+        return validate_edad_minima(value)
 
     def get_perfil(self, obj):
         """Retorna los campos de perfil como un objeto anidado"""
@@ -199,52 +199,3 @@ class FacebookAuthSerializer(serializers.Serializer):
             return value
         except requests.RequestException:
             raise serializers.ValidationError('Error al verificar el token con Facebook.')
-
-
-# ── Serializers de recuperación de contraseña ────────────────────────────────
-
-class PasswordResetRequestSerializer(serializers.Serializer):
-    """Serializer para solicitar código de recuperación."""
-    email = serializers.EmailField()
-
-    def validate(self, data):
-        from .password_reset_utils import generate_and_send_reset_code
-        email = data['email']
-        request = self.context.get('request')
-        generate_and_send_reset_code(email, request)
-        return data
-
-
-class PasswordResetVerifySerializer(serializers.Serializer):
-    """Serializer para verificar código de recuperación."""
-    email = serializers.EmailField()
-    code = serializers.CharField(max_length=4, min_length=4)
-
-    def validate(self, data):
-        from .password_reset_utils import verify_reset_code
-        email = data['email']
-        code = data['code']
-        
-        if not verify_reset_code(email, code):
-            raise serializers.ValidationError('Código inválido o expirado.')
-        
-        return data
-
-
-class PasswordResetConfirmSerializer(serializers.Serializer):
-    """Serializer para confirmar nueva contraseña."""
-    email = serializers.EmailField()
-    code = serializers.CharField(max_length=4, min_length=4)
-    new_password = serializers.CharField(min_length=8, write_only=True)
-
-    def validate(self, data):
-        from .password_reset_utils import reset_password
-        email = data['email']
-        code = data['code']
-        new_password = data['new_password']
-        request = self.context.get('request')
-        
-        if not reset_password(email, code, new_password, request):
-            raise serializers.ValidationError('Código inválido o expirado.')
-        
-        return data
