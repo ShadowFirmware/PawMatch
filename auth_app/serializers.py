@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import Dueño, Perfil
+from datetime import date
 import re
 import requests
 
@@ -32,6 +33,14 @@ class PerfilSerializer(serializers.Serializer):
 
     def validate_nombre(self, value):
         return validate_nombre_solo_letras(value)
+
+    def validate_fecha_nacimiento(self, value):
+        if value:
+            hoy = date.today()
+            edad = hoy.year - value.year - ((hoy.month, hoy.day) < (value.month, value.day))
+            if edad < 18:
+                raise serializers.ValidationError('Debes tener al menos 18 años para registrarte.')
+        return value
 
 
 class DueñoSerializer(serializers.ModelSerializer):
@@ -66,6 +75,14 @@ class DueñoSerializer(serializers.ModelSerializer):
     
     def validate_nombre(self, value):
         return validate_nombre_solo_letras(value)
+
+    def validate_fecha_nacimiento(self, value):
+        if value:
+            hoy = date.today()
+            edad = hoy.year - value.year - ((hoy.month, hoy.day) < (value.month, value.day))
+            if edad < 18:
+                raise serializers.ValidationError('Debes tener al menos 18 años para registrarte.')
+        return value
 
     def get_perfil(self, obj):
         """Retorna los campos de perfil como un objeto anidado"""
