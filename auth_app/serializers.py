@@ -6,17 +6,7 @@ import re
 import requests
 
 UBICACION_FIELD = 'ubicación'
-
 NOMBRE_REGEX = re.compile(r"^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s'\-]+$")
-
-
-def validate_edad_minima(value):
-    if value:
-        today = date.today()
-        age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
-        if age < 18:
-            raise serializers.ValidationError('Debes tener al menos 18 años para registrarte.')
-    return value
 
 
 def validate_nombre_solo_letras(value):
@@ -45,7 +35,12 @@ class PerfilSerializer(serializers.Serializer):
         return validate_nombre_solo_letras(value)
 
     def validate_fecha_nacimiento(self, value):
-        return validate_edad_minima(value)
+        if value:
+            hoy = date.today()
+            edad = hoy.year - value.year - ((hoy.month, hoy.day) < (value.month, value.day))
+            if edad < 18:
+                raise serializers.ValidationError('Debes tener al menos 18 años para registrarte.')
+        return value
 
 
 class DueñoSerializer(serializers.ModelSerializer):
@@ -82,7 +77,12 @@ class DueñoSerializer(serializers.ModelSerializer):
         return validate_nombre_solo_letras(value)
 
     def validate_fecha_nacimiento(self, value):
-        return validate_edad_minima(value)
+        if value:
+            hoy = date.today()
+            edad = hoy.year - value.year - ((hoy.month, hoy.day) < (value.month, value.day))
+            if edad < 18:
+                raise serializers.ValidationError('Debes tener al menos 18 años para registrarte.')
+        return value
 
     def get_perfil(self, obj):
         """Retorna los campos de perfil como un objeto anidado"""
@@ -199,3 +199,37 @@ class FacebookAuthSerializer(serializers.Serializer):
             return value
         except requests.RequestException:
             raise serializers.ValidationError('Error al verificar el token con Facebook.')
+
+
+# ── Serializers de recuperación de contraseña ────────────────────────────────
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate(self, data):
+        from .password_reset_utils import generate_and_send_reset_code
+        generate_and_send_reset_code(data['email'], self.context.get('request'))
+        return data
+
+
+class PasswordResetVerifySerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=4, min_length=4)
+
+    def validate(self, data):
+        from .password_reset_utils import verify_reset_code
+        if not verify_reset_code(data['email'], data['code']):
+            raise serializers.ValidationError('Código inválido o expirado.')
+        return data
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=4, min_length=4)
+    new_password = serializers.CharField(min_length=8, write_only=True)
+
+    def validate(self, data):
+        from .password_reset_utils import reset_password
+        if not reset_password(data['email'], data['code'], data['new_password'], self.context.get('request')):
+            raise serializers.ValidationError('Código inválido o expirado.')
+        return data
