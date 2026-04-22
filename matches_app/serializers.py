@@ -29,8 +29,9 @@ class PassMatchSerializer(serializers.Serializer):
 
 
 class ReporteSerializer(serializers.ModelSerializer):
+    motivo = serializers.CharField(min_length=10, max_length=1000)
+
     class Meta:
         model = Reporte
         fields = ['report_id', 'dueño', 'mascota', 'motivo', 'fecha_reporte']
-        # 'dueño' es read_only: se asigna en perform_create con request.user
         read_only_fields = ['report_id', 'dueño', 'fecha_reporte']

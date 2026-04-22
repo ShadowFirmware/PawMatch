@@ -98,8 +98,8 @@ class DueñoSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
+    email = serializers.EmailField(max_length=254)
+    password = serializers.CharField(write_only=True, max_length=128)
 
     def validate(self, attrs):
         email = attrs.get('email')
@@ -118,7 +118,7 @@ class LoginSerializer(serializers.Serializer):
 
 
 class GoogleAuthSerializer(serializers.Serializer):
-    access_token = serializers.CharField()
+    access_token = serializers.CharField(max_length=2048)
 
     def validate_access_token(self, value):
         """Validar el token de acceso de Google y obtener información del usuario"""
@@ -143,7 +143,7 @@ class GoogleAuthSerializer(serializers.Serializer):
 
 
 class FacebookAuthSerializer(serializers.Serializer):
-    access_token = serializers.CharField()
+    access_token = serializers.CharField(max_length=2048)
 
     def validate_access_token(self, value):
         """Validar el token de acceso de Facebook y obtener información del usuario"""

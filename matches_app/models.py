@@ -27,7 +27,7 @@ class Reporte(models.Model):
     report_id = models.AutoField(primary_key=True)
     dueño = models.ForeignKey('auth_app.Dueño', on_delete=models.CASCADE, related_name='reportes')
     mascota = models.ForeignKey(Mascota, on_delete=models.CASCADE, related_name='reportes')
-    motivo = models.TextField()
+    motivo = models.TextField(max_length=1000)
     fecha_reporte = models.DateTimeField(auto_now_add=True)
 
     class Meta:
