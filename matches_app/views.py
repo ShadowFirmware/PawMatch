@@ -121,14 +121,14 @@ class MatchViewSet(viewsets.ModelViewSet):
         return queryset
 
     def _calcular_distancia_entre_mascotas(self, mascota1, mascota2):
-        """Calcula la distancia entre dos mascotas basándose en la ubicación de sus dueños."""
+        """Calcula la distancia entre dos mascotas basándose en la ubicación propia de cada mascota."""
         try:
-            ub1 = mascota1.dueño.ubicación.strip()
-            ub2 = mascota2.dueño.ubicación.strip()
-            
+            ub1 = (mascota1.ubicación or '').strip()
+            ub2 = (mascota2.ubicación or '').strip()
+
             if ub1 in ('0,0', '0.0,0.0', '') or ub2 in ('0,0', '0.0,0.0', ''):
                 return None
-            
+
             lat1, lon1 = map(float, ub1.split(','))
             lat2, lon2 = map(float, ub2.split(','))
             return calcular_distancia(lat1, lon1, lat2, lon2)
@@ -180,8 +180,8 @@ class MatchViewSet(viewsets.ModelViewSet):
             # Calcular compatibilidad
             compat_caracteristicas = calcular_compatibilidad_caracteristicas(mascota, otra_mascota)
             compat_ubicacion = calcular_compatibilidad_ubicacion(
-                mascota.dueño.ubicación,
-                otra_mascota.dueño.ubicación,
+                mascota.ubicación or '0,0',
+                otra_mascota.ubicación or '0,0',
                 distancia_max
             )
             score_total = compat_caracteristicas + compat_ubicacion

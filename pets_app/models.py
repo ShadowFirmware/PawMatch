@@ -19,6 +19,7 @@ class Mascota(models.Model):
     género = models.CharField(max_length=10, choices=GENERO_CHOICES, blank=True, default='Otro')
     descripción = models.TextField(blank=True, default='')
     foto_url = models.CharField(max_length=255, blank=True, default='')
+    ubicación = models.CharField(max_length=255, blank=True, default='0,0')
 
     class Meta:
         db_table = 'mascotas'

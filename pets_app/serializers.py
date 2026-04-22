@@ -20,6 +20,7 @@ _MAGIC_SIGNATURES = [
 DUENO_FIELD = 'dueño'
 GENERO_FIELD = 'género'
 DESCRIPCION_FIELD = 'descripción'
+UBICACION_FIELD = 'ubicación'
 
 
 def sanitize_filename(name):
@@ -110,7 +111,7 @@ class MascotaSerializer(serializers.ModelSerializer):
         fields = [
             'mascota_id', DUENO_FIELD, 'dueño_nombre', 'dueño_email',
             'nombre', 'especie', 'raza', 'edad', GENERO_FIELD,
-            DESCRIPCION_FIELD, 'foto_url', 'fotos'
+            DESCRIPCION_FIELD, 'foto_url', UBICACION_FIELD, 'fotos'
         ]
         read_only_fields = ['mascota_id', DUENO_FIELD]
         extra_kwargs = {
@@ -120,6 +121,7 @@ class MascotaSerializer(serializers.ModelSerializer):
             'edad': {'required': False},
             GENERO_FIELD: {'required': False},
             'foto_url': {'required': False},
+            UBICACION_FIELD: {'required': False, 'allow_blank': True},
         }
 
     def _extract_characteristics(self, data):
@@ -148,7 +150,7 @@ class MascotaSerializer(serializers.ModelSerializer):
         }
 
         # Campos backend que pasan directo
-        passthrough = ['nombre', 'especie', 'raza', 'edad', GENERO_FIELD, DESCRIPCION_FIELD, 'foto_url']
+        passthrough = ['nombre', 'especie', 'raza', 'edad', GENERO_FIELD, DESCRIPCION_FIELD, 'foto_url', UBICACION_FIELD]
 
         normalized = {}
 
