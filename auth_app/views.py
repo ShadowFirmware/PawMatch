@@ -6,7 +6,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from .models import Dueño
-from .serializers import DueñoSerializer, LoginSerializer, PerfilSerializer, GoogleAuthSerializer, FacebookAuthSerializer
+from .serializers import (
+    DueñoSerializer, LoginSerializer, PerfilSerializer, 
+    GoogleAuthSerializer, FacebookAuthSerializer,
+    PasswordResetRequestSerializer, PasswordResetVerifySerializer, PasswordResetConfirmSerializer
+)
 from .audit import log_event
 from .throttles import LoginRateThrottle, RegisterRateThrottle
 
@@ -243,6 +247,66 @@ def facebook_auth_view(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception:
         logger.exception('Error en facebook_auth_view')
+        return Response(
+            {'error': ERROR_INTERNO_SERVIDOR},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+# ── Recuperación de contraseña ───────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def password_reset_request_view(request):
+    """Solicitar código de recuperación de contraseña."""
+    try:
+        serializer = PasswordResetRequestSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            return Response({
+                'message': 'Si el email existe, recibirás un código de recuperación.'
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception:
+        logger.exception('Error en password_reset_request_view')
+        return Response(
+            {'error': ERROR_INTERNO_SERVIDOR},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def password_reset_verify_view(request):
+    """Verificar código de recuperación."""
+    try:
+        serializer = PasswordResetVerifySerializer(data=request.data)
+        if serializer.is_valid():
+            return Response({
+                'message': 'Código verificado correctamente.',
+                'email': serializer.validated_data['email']
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception:
+        logger.exception('Error en password_reset_verify_view')
+        return Response(
+            {'error': ERROR_INTERNO_SERVIDOR},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def password_reset_confirm_view(request):
+    """Confirmar nueva contraseña."""
+    try:
+        serializer = PasswordResetConfirmSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            return Response({
+                'message': 'Contraseña restablecida exitosamente.'
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception:
+        logger.exception('Error en password_reset_confirm_view')
         return Response(
             {'error': ERROR_INTERNO_SERVIDOR},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -199,3 +199,52 @@ class FacebookAuthSerializer(serializers.Serializer):
             return value
         except requests.RequestException:
             raise serializers.ValidationError('Error al verificar el token con Facebook.')
+
+
+# ── Serializers de recuperación de contraseña ────────────────────────────────
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Serializer para solicitar código de recuperación."""
+    email = serializers.EmailField()
+
+    def validate(self, data):
+        from .password_reset_utils import generate_and_send_reset_code
+        email = data['email']
+        request = self.context.get('request')
+        generate_and_send_reset_code(email, request)
+        return data
+
+
+class PasswordResetVerifySerializer(serializers.Serializer):
+    """Serializer para verificar código de recuperación."""
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=4, min_length=4)
+
+    def validate(self, data):
+        from .password_reset_utils import verify_reset_code
+        email = data['email']
+        code = data['code']
+        
+        if not verify_reset_code(email, code):
+            raise serializers.ValidationError('Código inválido o expirado.')
+        
+        return data
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """Serializer para confirmar nueva contraseña."""
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=4, min_length=4)
+    new_password = serializers.CharField(min_length=8, write_only=True)
+
+    def validate(self, data):
+        from .password_reset_utils import reset_password
+        email = data['email']
+        code = data['code']
+        new_password = data['new_password']
+        request = self.context.get('request')
+        
+        if not reset_password(email, code, new_password, request):
+            raise serializers.ValidationError('Código inválido o expirado.')
+        
+        return data

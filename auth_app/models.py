@@ -159,3 +159,23 @@ class BitacoraEvento(models.Model):
     def __str__(self):
         user = self.usuario.email if self.usuario else 'anónimo'
         return f"[{self.fecha}] {self.accion} — {user}"
+
+
+class PasswordResetCode(models.Model):
+    """Códigos de recuperación de contraseña."""
+    
+    email = models.EmailField()
+    code = models.CharField(max_length=4)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used = models.BooleanField(default=False)
+    
+    class Meta:
+        db_table = 'password_reset_codes'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['email', 'code'], name='idx_reset_email_code'),
+            models.Index(fields=['created_at'], name='idx_reset_created'),
+        ]
+    
+    def __str__(self):
+        return f"Código {self.code} para {self.email}"
