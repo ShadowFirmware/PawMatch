@@ -8,19 +8,19 @@ UBICACION_FIELD = 'ubicación'
 
 class PerfilSerializer(serializers.Serializer):
     """Serializer para los campos de perfil que están en Dueño"""
-    nombre = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    email = serializers.EmailField(required=False, allow_null=True)
-    ubicación = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    foto_perfil = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    telefono = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    biografia = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    nombre     = serializers.CharField(required=False, allow_null=True, allow_blank=True, max_length=100)
+    email      = serializers.EmailField(required=False, allow_null=True, max_length=254)
+    ubicación  = serializers.CharField(required=False, allow_null=True, allow_blank=True, max_length=255)
+    foto_perfil = serializers.CharField(required=False, allow_null=True, allow_blank=True, max_length=255)
+    telefono   = serializers.CharField(required=False, allow_null=True, allow_blank=True, max_length=15)
+    biografia  = serializers.CharField(required=False, allow_null=True, allow_blank=True, max_length=500)
     fecha_nacimiento = serializers.DateField(required=False, allow_null=True)
-    genero = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    ciudad = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    estado = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    pais = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    genero     = serializers.CharField(required=False, allow_null=True, allow_blank=True, max_length=20)
+    ciudad     = serializers.CharField(required=False, allow_null=True, allow_blank=True, max_length=100)
+    estado     = serializers.CharField(required=False, allow_null=True, allow_blank=True, max_length=100)
+    pais       = serializers.CharField(required=False, allow_null=True, allow_blank=True, max_length=100)
     mostrar_telefono = serializers.BooleanField(required=False, default=False)
-    mostrar_email = serializers.BooleanField(required=False, default=False)
+    mostrar_email    = serializers.BooleanField(required=False, default=False)
 
 
 class DueñoSerializer(serializers.ModelSerializer):
