@@ -87,11 +87,6 @@ class MascotaSerializer(serializers.ModelSerializer):
     dueño_nombre = serializers.CharField(source='dueño.nombre', read_only=True)
     dueño_email = serializers.EmailField(source='dueño.email', read_only=True)
     foto_url = serializers.SerializerMethodField()
-    nombre = serializers.CharField(required=False, max_length=100, allow_blank=False)
-    especie = serializers.CharField(required=False, max_length=50, allow_blank=False)
-    raza = serializers.CharField(required=False, max_length=50, allow_blank=True)
-    edad = serializers.IntegerField(required=False, min_value=0, max_value=30)
-    descripción = serializers.CharField(required=False, max_length=500, allow_blank=True)
 
     def get_foto_url(self, obj):
         """Devuelve la URL absoluta de la foto, con el path URL-encoded."""
@@ -120,8 +115,13 @@ class MascotaSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['mascota_id', DUENO_FIELD]
         extra_kwargs = {
+            'nombre':    {'required': False},
+            'especie':   {'required': False},
+            'raza':      {'required': False, 'allow_blank': True},
+            'edad':      {'required': False},
             GENERO_FIELD: {'required': False, 'max_length': 20},
-            'foto_url': {'required': False},
+            DESCRIPCION_FIELD: {'required': False, 'allow_blank': True, 'max_length': 500},
+            'foto_url':  {'required': False},
             UBICACION_FIELD: {'required': False, 'allow_blank': True, 'max_length': 255},
         }
 
